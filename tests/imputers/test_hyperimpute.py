@@ -11,19 +11,20 @@ from hyperimpute.plugins.imputers import ImputerPlugin, Imputers
 from hyperimpute.plugins.imputers.plugin_hyperimpute import plugin
 from hyperimpute.plugins.utils.metrics import RMSE
 from hyperimpute.plugins.utils.simulate import simulate_nan
+from hyperimpute.utils.serialization import load_model, save_model
 
 
-def from_api(optimizer: str = "hyperband") -> ImputerPlugin:
+def from_serde(optimizer: str = "simple") -> ImputerPlugin:
+    buff = save_model(plugin(optimizer=optimizer))
+    return load_model(buff)
+
+
+def from_api(optimizer: str = "simple") -> ImputerPlugin:
     return Imputers().get("hyperimpute", optimizer=optimizer)
 
 
-def from_module(optimizer: str = "hyperband") -> ImputerPlugin:
+def from_module(optimizer: str = "simple") -> ImputerPlugin:
     return plugin(optimizer=optimizer)
-
-
-def from_serde() -> ImputerPlugin:
-    buff = plugin().save()
-    return plugin().load(buff)
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])

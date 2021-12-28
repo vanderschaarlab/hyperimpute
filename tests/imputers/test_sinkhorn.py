@@ -11,6 +11,12 @@ from hyperimpute.plugins.imputers import ImputerPlugin, Imputers
 from hyperimpute.plugins.imputers.plugin_sinkhorn import plugin
 from hyperimpute.plugins.utils.metrics import RMSE
 from hyperimpute.plugins.utils.simulate import simulate_nan
+from hyperimpute.utils.serialization import load_model, save_model
+
+
+def from_serde() -> ImputerPlugin:
+    buff = save_model(plugin(niter=20))
+    return load_model(buff)
 
 
 def from_api() -> ImputerPlugin:
@@ -19,11 +25,6 @@ def from_api() -> ImputerPlugin:
 
 def from_module() -> ImputerPlugin:
     return plugin(niter=20)
-
-
-def from_serde() -> ImputerPlugin:
-    buff = plugin(niter=20).save()
-    return plugin().load(buff)
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])

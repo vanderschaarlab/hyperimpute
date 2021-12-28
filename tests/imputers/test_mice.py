@@ -11,6 +11,14 @@ from hyperimpute.plugins.imputers import ImputerPlugin, Imputers
 from hyperimpute.plugins.imputers.plugin_mice import plugin
 from hyperimpute.plugins.utils.metrics import RMSE
 from hyperimpute.plugins.utils.simulate import simulate_nan
+from hyperimpute.utils.serialization import load_model, save_model
+
+
+def from_serde() -> ImputerPlugin:
+    mod = plugin(n_imputations=1, max_iter=100, random_state=123)
+
+    buff = save_model(mod)
+    return load_model(buff)
 
 
 def from_api() -> ImputerPlugin:
@@ -21,11 +29,6 @@ def from_module() -> ImputerPlugin:
     return plugin(n_imputations=1, max_iter=100, random_state=123)
 
 
-def from_serde() -> ImputerPlugin:
-    buff = plugin(n_imputations=1, max_iter=100, random_state=123).save()
-    return plugin().load(buff)
-
-
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
 def test_mice_plugin_sanity(test_plugin: ImputerPlugin) -> None:
     assert test_plugin is not None
@@ -33,7 +36,7 @@ def test_mice_plugin_sanity(test_plugin: ImputerPlugin) -> None:
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
 def test_mice_plugin_param_sanity(test_plugin: ImputerPlugin) -> None:
-    assert len(test_plugin._models) == 1  # type: ignore
+    assert len(test_plugin._models) == 1
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
