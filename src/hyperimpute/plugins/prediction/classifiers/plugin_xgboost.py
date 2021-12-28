@@ -11,7 +11,6 @@ import hyperimpute.plugins.prediction.classifiers.base as base
 from hyperimpute.plugins.prediction.classifiers.helper_calibration import (
     calibrated_model,
 )
-import hyperimpute.utils.serialization as serialization
 
 
 class XGBoostPlugin(base.ClassifierPlugin):
@@ -144,15 +143,6 @@ class XGBoostPlugin(base.ClassifierPlugin):
         self, X: pd.DataFrame, *args: Any, **kwargs: Any
     ) -> pd.DataFrame:
         return self.model.predict_proba(X, *args, **kwargs)
-
-    def save(self) -> bytes:
-        return serialization.save_model(self.model)
-
-    @classmethod
-    def load(cls, buff: bytes) -> "XGBoostPlugin":
-        model = serialization.load_model(buff)
-
-        return cls(model=model)
 
 
 plugin = XGBoostPlugin

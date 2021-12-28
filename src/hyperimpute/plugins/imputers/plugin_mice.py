@@ -14,7 +14,6 @@ from sklearn.impute import IterativeImputer
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
 import hyperimpute.plugins.utils.decorators as decorators
-import hyperimpute.utils.serialization as serialization
 
 
 class MicePlugin(base.ImputerPlugin):
@@ -118,14 +117,6 @@ class MicePlugin(base.ImputerPlugin):
                 len(MicePlugin.imputation_order_vals) - 1,
             ),
         ]
-
-    def save(self) -> bytes:
-        return serialization.save_model(self._models)
-
-    @classmethod
-    def load(cls, buff: bytes) -> "MicePlugin":
-        models = serialization.load_model(buff)
-        return cls(model=models)
 
 
 plugin = MicePlugin

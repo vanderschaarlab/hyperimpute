@@ -685,12 +685,5 @@ class HyperImputePlugin(base.ImputerPlugin):
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
         return self.model.fit_transform(X)
 
-    def save(self) -> bytes:
-        return b""
-
-    @classmethod
-    def load(cls, buff: bytes) -> "HyperImputePlugin":
-        return cls()
-
 
 plugin = HyperImputePlugin

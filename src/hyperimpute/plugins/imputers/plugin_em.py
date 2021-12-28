@@ -239,12 +239,5 @@ class EMPlugin(base.ImputerPlugin):
             params.Categorical("convergence_threshold", [1e-08, 1e-07, 1e-06]),
         ]
 
-    def save(self) -> bytes:
-        return b""
-
-    @classmethod
-    def load(cls, buff: bytes) -> "EMPlugin":
-        return cls()
-
 
 plugin = EMPlugin

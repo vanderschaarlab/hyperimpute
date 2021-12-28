@@ -180,12 +180,5 @@ class SinkhornPlugin(base.ImputerPlugin):
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
         return self._model.fit_transform(X)
 
-    def save(self) -> bytes:
-        return b""
-
-    @classmethod
-    def load(cls, buff: bytes) -> "SinkhornPlugin":
-        return cls()
-
 
 plugin = SinkhornPlugin

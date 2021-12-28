@@ -8,7 +8,6 @@ from sklearn.linear_model import LinearRegression
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.regression.base as base
-import hyperimpute.utils.serialization as serialization
 
 
 class LinearRegressionPlugin(base.RegressionPlugin):
@@ -63,15 +62,6 @@ class LinearRegressionPlugin(base.RegressionPlugin):
 
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         return self.model.predict(X, *args, **kwargs)
-
-    def save(self) -> bytes:
-        return serialization.save_model(self.model)
-
-    @classmethod
-    def load(cls, buff: bytes) -> "LinearRegressionPlugin":
-        model = serialization.load_model(buff)
-
-        return cls(model=model)
 
 
 plugin = LinearRegressionPlugin

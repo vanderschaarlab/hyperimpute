@@ -142,12 +142,3 @@ class Plugin(metaclass=ABCMeta):
     @abstractmethod
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         ...
-
-    @abstractmethod
-    def save(self) -> bytes:
-        ...
-
-    @classmethod
-    @abstractmethod
-    def load(cls, buff: bytes) -> "Plugin":
-        ...

@@ -29,12 +29,5 @@ class NopPlugin(base.ImputerPlugin):
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
         return X
 
-    def save(self) -> bytes:
-        return b""
-
-    @classmethod
-    def load(cls, buff: bytes) -> "NopPlugin":
-        return cls()
-
 
 plugin = NopPlugin

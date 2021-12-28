@@ -296,13 +296,5 @@ class SoftImputePlugin(base.ImputerPlugin):
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
         return self._model.transform(X.to_numpy())
 
-    def save(self) -> bytes:
-        return self._model.save()
-
-    @classmethod
-    def load(cls, buff: bytes) -> "SoftImputePlugin":
-        model = SoftImpute.load(buff)
-        return cls(model=model)
-
 
 plugin = SoftImputePlugin

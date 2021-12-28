@@ -360,12 +360,5 @@ class GainPlugin(base.ImputerPlugin):
         self._model.fit(X)
         return self._model.transform(X).detach().cpu().numpy()
 
-    def save(self) -> bytes:
-        return b""
-
-    @classmethod
-    def load(cls, buff: bytes) -> "GainPlugin":
-        return cls()
-
 
 plugin = GainPlugin

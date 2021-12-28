@@ -8,7 +8,6 @@ import pandas as pd
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.regression.base as base
-import hyperimpute.utils.serialization as serialization
 
 
 class CatBoostRegressorPlugin(base.RegressionPlugin):
@@ -79,15 +78,6 @@ class CatBoostRegressorPlugin(base.RegressionPlugin):
         self, X: pd.DataFrame, *args: Any, **kwargs: Any
     ) -> pd.DataFrame:
         return self.model.predict_proba(X, *args, **kwargs)
-
-    def save(self) -> bytes:
-        return serialization.save_model(self.model)
-
-    @classmethod
-    def load(cls, buff: bytes) -> "CatBoostRegressorPlugin":
-        model = serialization.load_model(buff)
-
-        return cls(model=model)
 
 
 plugin = CatBoostRegressorPlugin

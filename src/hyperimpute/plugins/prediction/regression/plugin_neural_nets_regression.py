@@ -153,7 +153,7 @@ class BasicNet(nn.Module):
             dataset, [train_size, test_size]
         )
 
-        loader = DataLoader(train_dataset, batch_size=self.batch_size, pin_memory=True)
+        loader = DataLoader(train_dataset, batch_size=self.batch_size, pin_memory=False)
 
         # do training
         val_loss_best = 999999
@@ -316,14 +316,7 @@ class NeuralNetsRegressionPlugin(base.RegressionPlugin):
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         with torch.no_grad():
             X = torch.from_numpy(np.asarray(X)).float()
-            return self.model(X).detach().numpy()
-
-    def save(self) -> bytes:
-        return b""
-
-    @classmethod
-    def load(cls, buff: bytes) -> "NeuralNetsRegressionPlugin":
-        return cls()
+            return self.model(X).detach().cpu().numpy()
 
 
 plugin = NeuralNetsRegressionPlugin

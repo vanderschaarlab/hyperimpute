@@ -8,7 +8,6 @@ from sklearn.impute import SimpleImputer
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
-import hyperimpute.utils.serialization as serialization
 
 
 class MostFrequentPlugin(base.ImputerPlugin):
@@ -53,14 +52,6 @@ class MostFrequentPlugin(base.ImputerPlugin):
 
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
         return self._model.transform(X)
-
-    def save(self) -> bytes:
-        return serialization.save_model(self._model)
-
-    @classmethod
-    def load(cls, buff: bytes) -> "MostFrequentPlugin":
-        model = serialization.load_model(buff)
-        return cls(model=model)
 
 
 plugin = MostFrequentPlugin
