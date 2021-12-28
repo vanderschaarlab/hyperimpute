@@ -79,7 +79,7 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
             random_state=random_state,
             n_estimators=n_estimators,
             max_depth=max_depth,
-            nthread=3,
+            nthread=-1,
             lr=lr,
             **kwargs,
         )

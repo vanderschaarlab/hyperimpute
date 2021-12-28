@@ -2,10 +2,10 @@
 from typing import Tuple
 
 # third party
-# adjutorium absolute
-import adjutorium.logger as log
-from adjutorium.utils.redis import backend
 import optuna
+
+# hyperimpute absolute
+import hyperimpute.logger as log
 
 threshold = 40
 
@@ -76,13 +76,10 @@ def create_study(
     study_name: str,
     direction: str = "maximize",
     load_if_exists: bool = True,
-    storage_type: str = "redis",
     patience: int = threshold,
 ) -> Tuple[optuna.Study, ParamRepeatPruner]:
 
     storage_obj = None
-    if storage_type == "redis":
-        storage_obj = backend.optuna()
 
     try:
         study = optuna.create_study(

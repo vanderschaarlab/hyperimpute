@@ -79,7 +79,7 @@ class XGBoostPlugin(base.ClassifierPlugin):
         random_state: int = 0,
         calibration: int = 0,
         model: Any = None,
-        nthread: int = 3,
+        nthread: int = -1,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:

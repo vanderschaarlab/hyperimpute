@@ -31,7 +31,8 @@ def sample_Z(m: int, n: int) -> np.ndarray:
     Returns:
         np.ndarray: generated random values
     """
-    return np.random.uniform(0.0, 0.01, size=[m, n])
+    res = np.random.uniform(0.0, 0.01, size=[m, n])
+    return torch.from_numpy(res).to(DEVICE)
 
 
 def sample_M(m: int, n: int, p: float) -> np.ndarray:
@@ -48,7 +49,8 @@ def sample_M(m: int, n: int, p: float) -> np.ndarray:
     unif_prob = np.random.uniform(0.0, 1.0, size=[m, n])
     M = unif_prob > p
     M = 1.0 * M
-    return M
+
+    return torch.from_numpy(M).to(DEVICE)
 
 
 def sample_idx(m: int, n: int) -> np.ndarray:
@@ -189,6 +191,8 @@ class GainImputation(TransformerMixin):
         min_val = np.zeros(dim)
         max_val = np.zeros(dim)
 
+        X = X.cpu()
+
         for i in range(dim):
             min_val[i] = np.nanmin(X[:, i])
             X[:, i] = X[:, i] - np.nanmin(X[:, i])
@@ -197,9 +201,11 @@ class GainImputation(TransformerMixin):
 
         # Set missing
         mask = 1 - (1 * (np.isnan(X)))
-        mask = mask.float()
+        mask = mask.float().to(DEVICE)
 
         X = torch.nan_to_num(X)
+
+        X = X.to(DEVICE)
 
         self.model = GainModel(dim, h_dim)
 
@@ -262,6 +268,7 @@ class GainImputation(TransformerMixin):
 
         no, dim = X.shape
 
+        X = X.cpu()
         # MinMaxScaler normalization
         for i in range(dim):
             X[:, i] = X[:, i] - min_val[i]
@@ -270,6 +277,9 @@ class GainImputation(TransformerMixin):
         # Set missing
         mask = 1 - (1 * (np.isnan(X)))
         x = np.nan_to_num(X)
+
+        x = torch.from_numpy(x).to(DEVICE)
+        mask = mask.to(DEVICE)
 
         # Imputed data
         z = sample_Z(no, dim)
@@ -282,12 +292,15 @@ class GainImputation(TransformerMixin):
             imputed_data[:, i] = imputed_data[:, i] * (max_val[i] + EPS)
             imputed_data[:, i] = imputed_data[:, i] + min_val[i]
 
-        if np.all(np.isnan(imputed_data.detach().numpy())):
+        if np.all(np.isnan(imputed_data.detach().cpu().numpy())):
             err = "The imputed result contains nan. This is a bug. Please report it on the issue tracker."
             log.critical(err)
             raise RuntimeError(err)
 
-        return mask * np.nan_to_num(Xmiss) + (1 - mask) * imputed_data
+        mask = mask.cpu()
+        imputed_data = imputed_data.detach().cpu()
+
+        return mask * np.nan_to_num(Xmiss.cpu()) + (1 - mask) * imputed_data
 
     def fit_transform(self, X: torch.Tensor) -> torch.Tensor:
         """Imputes the provided dataset using the GAIN strategy.
@@ -345,7 +358,7 @@ class GainPlugin(base.ImputerPlugin):
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = torch.tensor(X.values).to(DEVICE)
         self._model.fit(X)
-        return self._model.transform(X).detach().numpy()
+        return self._model.transform(X).detach().cpu().numpy()
 
     def save(self) -> bytes:
         return b""

@@ -43,7 +43,7 @@ def test_sinkhorn_plugin_type(test_plugin: ImputerPlugin) -> None:
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
 def test_sinkhorn_plugin_hyperparams(test_plugin: ImputerPlugin) -> None:
-    assert len(test_plugin.hyperparameter_space()) == 7
+    assert len(test_plugin.hyperparameter_space()) == 6
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
