@@ -3,11 +3,14 @@ from typing import Any, List, Optional
 
 # third party
 import pandas as pd
+import torch
 from xgboost import XGBRegressor
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.regression.base as base
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class XGBoostRegressorPlugin(base.RegressionPlugin):
@@ -73,6 +76,13 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
         if hyperparam_search_iterations:
             n_estimators = int(hyperparam_search_iterations)
 
+        gpu_args = {}
+
+        if DEVICE == "cuda":
+            gpu_args = {
+                "tree_method": "gpu_hist",
+                "predictor": "gpu_predictor",
+            }
         self.model = XGBRegressor(
             verbosity=0,
             random_state=random_state,
@@ -80,6 +90,7 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
             max_depth=max_depth,
             nthread=-1,
             lr=lr,
+            **gpu_args,
             **kwargs,
         )
 

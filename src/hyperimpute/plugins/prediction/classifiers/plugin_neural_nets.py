@@ -237,7 +237,7 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
         nonlin: str = "relu",
         lr: float = 1e-3,
         weight_decay: float = 1e-3,
-        n_iter: int = 100,
+        n_iter: int = 1000,
         batch_size: int = 128,
         n_iter_print: int = 10,
         seed: int = 0,
@@ -319,14 +319,14 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
 
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         with torch.no_grad():
-            X = torch.from_numpy(np.asarray(X)).float()
+            X = torch.from_numpy(np.asarray(X)).float().to(DEVICE)
             return self.model(X).argmax(dim=-1).detach().cpu().numpy()
 
     def _predict_proba(
         self, X: pd.DataFrame, *args: Any, **kwargs: Any
     ) -> pd.DataFrame:
         with torch.no_grad():
-            X = torch.from_numpy(np.asarray(X)).float()
+            X = torch.from_numpy(np.asarray(X)).float().to(DEVICE)
             return self.model(X).detach().numpy()
 
 

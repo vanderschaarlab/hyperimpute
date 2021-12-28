@@ -8,9 +8,6 @@ from sklearn.linear_model import LogisticRegression
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.classifiers.base as base
-from hyperimpute.plugins.prediction.classifiers.helper_calibration import (
-    calibrated_model,
-)
 
 
 class LogisticRegressionPlugin(base.ClassifierPlugin):
@@ -51,7 +48,6 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
         class_weight: int = 0,
         max_iter: int = 10000,
         penalty: str = "l2",
-        calibration: int = 0,
         model: Any = None,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
@@ -64,7 +60,7 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
         if hyperparam_search_iterations:
             max_iter = int(hyperparam_search_iterations) * 100
 
-        model = LogisticRegression(
+        self.model = LogisticRegression(
             C=C,
             solver=LogisticRegressionPlugin.solvers[solver],
             multi_class=LogisticRegressionPlugin.classes[multi_class],
@@ -73,7 +69,6 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
             max_iter=max_iter,
             n_jobs=-1,
         )
-        self.model = calibrated_model(model, calibration)
 
     @staticmethod
     def name() -> str:

@@ -10,14 +10,12 @@ import pandas as pd
 from scipy.stats import wasserstein_distance
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 import tabulate
 
 # hyperimpute absolute
 from hyperimpute.plugins.imputers import Imputers
 from hyperimpute.plugins.prediction import Predictions
-from hyperimpute.plugins.preprocessors.feature_scaling.plugin_minmax_scaler import (
-    plugin as minmax,
-)
 from hyperimpute.plugins.utils.metrics import RMSE
 from hyperimpute.plugins.utils.simulate import simulate_nan
 from hyperimpute.utils.distributions import enable_reproducible_results
@@ -59,9 +57,9 @@ def ampute(
 
 
 def scale_data(X: pd.DataFrame) -> pd.DataFrame:
-    preproc = minmax()
-
-    return preproc.fit_transform(X)
+    preproc = MinMaxScaler()
+    cols = X.columns
+    return pd.DataFrame(preproc.fit_transform(X), columns=cols)
 
 
 def simulate_scenarios(X: pd.DataFrame) -> pd.DataFrame:

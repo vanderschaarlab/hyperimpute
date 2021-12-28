@@ -8,9 +8,6 @@ from sklearn.ensemble import RandomForestClassifier
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.classifiers.base as base
-from hyperimpute.plugins.prediction.classifiers.helper_calibration import (
-    calibrated_model,
-)
 
 
 class RandomForestPlugin(base.ClassifierPlugin):
@@ -52,7 +49,6 @@ class RandomForestPlugin(base.ClassifierPlugin):
         min_samples_split: int = 2,
         bootstrap: bool = True,
         min_samples_leaf: int = 2,
-        calibration: int = 0,
         model: Any = None,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
@@ -65,7 +61,7 @@ class RandomForestPlugin(base.ClassifierPlugin):
         if hyperparam_search_iterations:
             n_estimators = int(hyperparam_search_iterations)
 
-        model = RandomForestClassifier(
+        self.model = RandomForestClassifier(
             n_estimators=n_estimators,
             criterion=RandomForestPlugin.criterions[criterion],
             max_features=RandomForestPlugin.features[max_features],
@@ -75,7 +71,6 @@ class RandomForestPlugin(base.ClassifierPlugin):
             min_samples_leaf=min_samples_leaf,
             n_jobs=-1,
         )
-        self.model = calibrated_model(model, calibration)
 
     @staticmethod
     def name() -> str:

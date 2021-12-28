@@ -3,14 +3,14 @@ from typing import Any, List, Optional
 
 # third party
 import pandas as pd
+import torch
 from xgboost import XGBClassifier
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.classifiers.base as base
-from hyperimpute.plugins.prediction.classifiers.helper_calibration import (
-    calibrated_model,
-)
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class XGBoostPlugin(base.ClassifierPlugin):
@@ -44,8 +44,6 @@ class XGBoostPlugin(base.ClassifierPlugin):
             Minimum sum of instance weight(hessian) needed in a child.
         max_bin: int
             Number of bins for histogram construction.
-        tree_method: str
-            Specify which tree method to use. Default to auto. If this parameter is set to default, XGBoost will choose the most conservative option available.
         random_state: float
             Random number seed.
 
@@ -73,10 +71,8 @@ class XGBoostPlugin(base.ClassifierPlugin):
         learning_rate: float = 1e-2,
         min_child_weight: int = 0,
         max_bin: int = 256,
-        tree_method: str = "hist",
         booster: int = 0,
         random_state: int = 0,
-        calibration: int = 0,
         model: Any = None,
         nthread: int = -1,
         hyperparam_search_iterations: Optional[int] = None,
@@ -90,7 +86,15 @@ class XGBoostPlugin(base.ClassifierPlugin):
         if hyperparam_search_iterations:
             n_estimators = int(hyperparam_search_iterations)
 
-        model = XGBClassifier(
+        gpu_args = {}
+
+        if DEVICE == "cuda":
+            gpu_args = {
+                "tree_method": "gpu_hist",
+                "predictor": "gpu_predictor",
+            }
+
+        self.model = XGBClassifier(
             n_estimators=n_estimators,
             reg_lambda=reg_lambda,
             reg_alpha=reg_alpha,
@@ -104,13 +108,12 @@ class XGBoostPlugin(base.ClassifierPlugin):
             max_bin=max_bin,
             verbosity=0,
             use_label_encoder=False,
-            tree_method=tree_method,
             booster=XGBoostPlugin.booster[booster],
             random_state=random_state,
             nthread=nthread,
+            **gpu_args,
             **kwargs,
         )
-        self.model = calibrated_model(model, calibration)
 
     @staticmethod
     def name() -> str:

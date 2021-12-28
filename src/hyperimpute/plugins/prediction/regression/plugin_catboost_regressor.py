@@ -4,10 +4,13 @@ from typing import Any, List, Optional
 # third party
 from catboost import CatBoostRegressor
 import pandas as pd
+import torch
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.regression.base as base
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class CatBoostRegressorPlugin(base.RegressionPlugin):
@@ -43,6 +46,13 @@ class CatBoostRegressorPlugin(base.RegressionPlugin):
         if hyperparam_search_iterations:
             n_estimators = int(hyperparam_search_iterations)
 
+        gpu_args = {}
+
+        if DEVICE == "cuda":
+            gpu_args = {
+                "task_type": "GPU",
+            }
+
         self.model = CatBoostRegressor(
             depth=depth,
             logging_level="Silent",
@@ -50,6 +60,7 @@ class CatBoostRegressorPlugin(base.RegressionPlugin):
             used_ram_limit="6gb",
             n_estimators=n_estimators,
             grow_policy=CatBoostRegressorPlugin.grow_policies[grow_policy],
+            **gpu_args,
         )
 
     @staticmethod
