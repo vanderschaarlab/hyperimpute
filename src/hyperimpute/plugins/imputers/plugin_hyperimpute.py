@@ -14,12 +14,12 @@ from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import LabelEncoder
 
 # hyperimpute absolute
-from hyperimpute.explorers.core.optimizer import EarlyStoppingExceeded, create_study
 import hyperimpute.logger as log
 import hyperimpute.plugins.core.params as params
 from hyperimpute.plugins.imputers import Imputers
 import hyperimpute.plugins.imputers.base as base
 from hyperimpute.plugins.prediction import Predictions
+from hyperimpute.utils.optimizer import EarlyStoppingExceeded, create_study
 from hyperimpute.utils.tester import evaluate_estimator, evaluate_regression
 
 TOL = 1e-3

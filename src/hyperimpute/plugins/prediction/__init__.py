@@ -4,7 +4,6 @@ from typing import Any, Generator, List, Type, Union
 # hyperimpute absolute
 from hyperimpute.plugins.prediction.classifiers import Classifiers
 from hyperimpute.plugins.prediction.regression import Regression
-from hyperimpute.plugins.prediction.risk_estimation import RiskEstimation
 
 # hyperimpute relative
 from .base import PredictionPlugin  # noqa: F401,E402
@@ -14,7 +13,7 @@ class Predictions:
     def __init__(self, category: str = "classifier") -> None:
         self._category = category
 
-        self._plugins: Union[Classifiers, RiskEstimation, Regression]
+        self._plugins: Union[Classifiers, Regression]
 
         self.reload()
 
@@ -45,8 +44,6 @@ class Predictions:
     def reload(self) -> "Predictions":
         if self._category == "classifier":
             self._plugins = Classifiers()
-        elif self._category == "risk_estimation":
-            self._plugins = RiskEstimation()
         elif self._category == "regression":
             self._plugins = Regression()
         else:

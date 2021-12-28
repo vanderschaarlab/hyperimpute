@@ -2,10 +2,8 @@
 from typing import Any, Dict, List, Tuple, Type, Union
 
 # hyperimpute absolute
-from hyperimpute.plugins.explainers import Explainers  # noqa: F401,E402
 from hyperimpute.plugins.imputers import Imputers
 from hyperimpute.plugins.prediction import Predictions
-from hyperimpute.plugins.preprocessors import Preprocessors
 import hyperimpute.plugins.utils  # noqa: F401,E402
 
 # hyperimpute relative
@@ -14,21 +12,13 @@ from .core import base_plugin  # noqa: F401,E402
 
 class Plugins:
     def __init__(self) -> None:
-        self._plugins: Dict[
-            str, Dict[str, Union[Imputers, Predictions, Preprocessors]]
-        ] = {
+        self._plugins: Dict[str, Dict[str, Union[Imputers, Predictions]]] = {
             "imputer": {
                 "default": Imputers(),
             },
             "prediction": {
                 "classifier": Predictions(category="classifier"),
-                "risk_estimation": Predictions(category="risk_estimation"),
-            },
-            "preprocessor": {
-                "feature_scaling": Preprocessors(category="feature_scaling"),
-                "dimensionality_reduction": Preprocessors(
-                    category="dimensionality_reduction"
-                ),
+                "regression": Predictions(category="regression"),
             },
         }
 
