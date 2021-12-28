@@ -3,14 +3,12 @@ from typing import Any, List, Optional
 
 # third party
 import pandas as pd
-import torch
 from xgboost import XGBRegressor
 
 # hyperimpute absolute
+from hyperimpute import DEVICE
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.regression.base as base
-
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class XGBoostRegressorPlugin(base.RegressionPlugin):

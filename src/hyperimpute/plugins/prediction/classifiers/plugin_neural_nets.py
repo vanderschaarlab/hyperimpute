@@ -327,7 +327,7 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
     ) -> pd.DataFrame:
         with torch.no_grad():
             X = torch.from_numpy(np.asarray(X)).float().to(DEVICE)
-            return self.model(X).detach().numpy()
+            return self.model(X).detach().cpu().numpy()
 
 
 plugin = NeuralNetsPlugin

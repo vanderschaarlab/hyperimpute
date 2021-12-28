@@ -5,6 +5,7 @@ import warnings
 
 # third party
 import optuna
+import torch
 
 # hyperimpute relative
 from . import logger  # noqa: F401
@@ -12,6 +13,7 @@ from . import logger  # noqa: F401
 optuna.logging.disable_propagation()
 optuna.logging.disable_default_handler()  # Stop showing logs in sys.stderr.
 
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 logger.add(sink=sys.stderr, level="CRITICAL")
 

@@ -4,13 +4,11 @@ from typing import Any, List, Optional
 # third party
 from catboost import CatBoostRegressor
 import pandas as pd
-import torch
 
 # hyperimpute absolute
+from hyperimpute import DEVICE
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.regression.base as base
-
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class CatBoostRegressorPlugin(base.RegressionPlugin):
