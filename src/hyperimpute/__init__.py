@@ -1,16 +1,27 @@
+# stdlib
+import os
 import sys
+import warnings
 
-if sys.version_info[:2] >= (3, 8):
-    # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
-    from importlib.metadata import PackageNotFoundError, version  # pragma: no cover
-else:
-    from importlib_metadata import PackageNotFoundError, version  # pragma: no cover
+# third party
+import optuna
 
-try:
-    # Change here if project is renamed and does not equal the package name
-    dist_name = __name__
-    __version__ = version(dist_name)
-except PackageNotFoundError:  # pragma: no cover
-    __version__ = "unknown"
-finally:
-    del version, PackageNotFoundError
+# hyperimpute relative
+from . import logger  # noqa: F401
+
+optuna.logging.disable_propagation()
+optuna.logging.disable_default_handler()  # Stop showing logs in sys.stderr.
+
+
+logger.add(sink=sys.stderr, level="CRITICAL")
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings(
+    "ignore", category=optuna.exceptions.ExperimentalWarning, module="optuna"
+)
+
+os.environ["OMP_NUM_THREADS"] = "2"
+os.environ["OPENBLAS_NUM_THREADS"] = "2"
+os.environ["MKL_NUM_THREADS"] = "2"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "2"
+os.environ["NUMEXPR_NUM_THREADS"] = "2"
