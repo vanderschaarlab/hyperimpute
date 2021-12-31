@@ -410,11 +410,12 @@ class IterativeErrorCorrection:
         n_inner_iter: int = 50,
         n_outer_iter: int = 5,
     ):
-        assert optimizer in [
+        if optimizer not in [
             "hyperband",
             "bayesian",
             "simple",
-        ], f"Invalid optimizer {optimizer}"
+        ]:
+            raise RuntimeError(f"Invalid optimizer {optimizer}")
 
         self.study = study
         self.class_threshold = class_threshold

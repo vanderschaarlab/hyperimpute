@@ -49,7 +49,9 @@ def group(names: List[str]) -> Tuple[Type, ...]:
 
     plugins = Plugins()
     for fqdn in names:
-        assert "." in fqdn
+        if "." not in fqdn:
+            raise RuntimeError(f"invalid fqdn {fqdn}")
+
         cat, subtype, name = fqdn.split(".")
 
         res.append(plugins.get_type(cat, subtype, name))

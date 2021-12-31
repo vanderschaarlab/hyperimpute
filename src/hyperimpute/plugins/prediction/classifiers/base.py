@@ -35,7 +35,9 @@ class ClassifierPlugin(prediction_base.PredictionPlugin):
     def fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> plugin.Plugin:
         X = cast.to_dataframe(X)
 
-        assert len(args) > 0
+        if len(args) == 0:
+            raise RuntimeError("Please provide the training labels as well")
+
         Y = cast.to_dataframe(args[0]).values.ravel()
 
         return self._fit(X, Y, **kwargs)

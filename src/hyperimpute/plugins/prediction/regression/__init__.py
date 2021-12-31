@@ -25,7 +25,8 @@ class Regression:
         for plugin in plugins:
             name = basename(plugin)
             spec = importlib.util.spec_from_file_location(name, plugin)
-            assert isinstance(spec.loader, Loader)
+            if not isinstance(spec.loader, Loader):
+                raise RuntimeError("invalid plugin")
 
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)

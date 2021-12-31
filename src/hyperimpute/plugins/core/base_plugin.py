@@ -34,7 +34,8 @@ class Plugin(metaclass=ABCMeta):
         self.output = pd.DataFrame
 
     def change_output(self, output: str) -> None:
-        assert output in ["pandas", "numpy"], "Invalid output type"
+        if output not in ["pandas", "numpy"]:
+            raise RuntimeError("Invalid output type")
         if output == "pandas":
             self.output = pd.DataFrame
         elif output == "numpy":
