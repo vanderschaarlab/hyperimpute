@@ -9,6 +9,7 @@
 
 <div align="center">
 
+ [![hyperimpute Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://github.com/vanderschaarlab/hyperimpute/blob/main/LICENSE)
 
 </div>
