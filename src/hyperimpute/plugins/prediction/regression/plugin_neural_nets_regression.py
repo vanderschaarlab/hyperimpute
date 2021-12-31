@@ -284,7 +284,8 @@ class NeuralNetsRegressionPlugin(base.RegressionPlugin):
     def _fit(
         self, X: pd.DataFrame, *args: Any, **kwargs: Any
     ) -> "NeuralNetsRegressionPlugin":
-        assert len(*args) > 0
+        if len(*args) == 0:
+            raise RuntimeError("Please provide the labels for training")
 
         y = args[0]
 

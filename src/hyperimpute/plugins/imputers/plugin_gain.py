@@ -258,8 +258,10 @@ class GainImputation(TransformerMixin):
         Raises:
             RuntimeError: if the result contains np.nans.
         """
-        assert self.norm_parameters is not None
-        assert self.model is not None
+        if self.norm_parameters is None:
+            raise RuntimeError("invalid norm_parameters")
+        if self.model is None:
+            raise RuntimeError("Fit the model first")
 
         X = Xmiss.clone()
 
