@@ -31,21 +31,6 @@ def dataset(mechanism: str, p_miss: float) -> Tuple[np.ndarray, np.ndarray, np.n
 
 @pytest.mark.slow
 @pytest.mark.parametrize("plugin", Imputers().list())
-def test_serialization(plugin: str) -> None:
-    x, x_miss, mask = dataset("MAR", 0.3)
-
-    estimator = Imputers().get(plugin)
-
-    estimator.fit_transform(x_miss)
-
-    buff = estimator.save()
-    estimator_new = Imputers().get_type(plugin).load(buff)
-
-    estimator_new.transform(x_miss)
-
-
-@pytest.mark.slow
-@pytest.mark.parametrize("plugin", Imputers().list())
 def test_pickle(plugin: str) -> None:
     x, x_miss, mask = dataset("MAR", 0.3)
 
