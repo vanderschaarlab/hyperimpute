@@ -36,7 +36,7 @@ class IterativeChainedEquationsPlugin(base.ImputerPlugin):
         3  2.000000  2.000000  2.000000  2.000000
     """
 
-    initial_strategy_vals = ["mean", "median", "most_frequent", "constant"]
+    initial_strategy_vals = ["mean", "median", "most_frequent"]
     imputation_order_vals = ["ascending", "descending", "roman", "arabic", "random"]
 
     def __init__(

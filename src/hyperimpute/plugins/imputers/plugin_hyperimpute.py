@@ -19,6 +19,7 @@ import hyperimpute.plugins.core.params as params
 from hyperimpute.plugins.imputers import Imputers
 import hyperimpute.plugins.imputers.base as base
 from hyperimpute.plugins.prediction import Predictions
+from hyperimpute.utils.distributions import enable_reproducible_results
 from hyperimpute.utils.optimizer import EarlyStoppingExceeded, create_study
 from hyperimpute.utils.tester import evaluate_estimator, evaluate_regression
 
@@ -407,6 +408,7 @@ class IterativeErrorCorrection:
         class_threshold: int = 20,
         optimize_thresh: int = 1000,
         optimize_thresh_upper: int = 3000,
+        imputation_order_strategy: str = "random",
         n_inner_iter: int = 50,
         n_outer_iter: int = 5,
     ):
@@ -426,6 +428,7 @@ class IterativeErrorCorrection:
         self.n_outer_iter = n_outer_iter
         self.classifier_seed = classifier_seed
         self.regression_seed = regression_seed
+        self.imputation_order_strategy = imputation_order_strategy
 
         self.optimizer: Any
         if optimizer == "hyperband":
@@ -593,10 +596,20 @@ class IterativeErrorCorrection:
 
         return X
 
+    def _get_imputation_order(self) -> list:
+        if self.imputation_order_strategy == "ascending":
+            return self.imputation_order
+        elif self.imputation_order_strategy == "descending":
+            return list(reversed(self.imputation_order))
+        else:
+            random.shuffle(self.imputation_order)
+            return self.imputation_order
+
     def _iterate_imputation(self, X: pd.DataFrame) -> pd.DataFrame:
         # Run an iteration of imputation on all columns
-        random.shuffle(self.imputation_order)
-        for col in self.imputation_order:
+        cols = self._get_imputation_order()
+
+        for col in cols:
             X = self._impute_single_column(X, col)
         return X
 
@@ -647,25 +660,34 @@ class IterativeErrorCorrection:
 class HyperImputePlugin(base.ImputerPlugin):
     """HyperImpute strategy."""
 
+    initial_strategy_vals = ["mean", "median", "most_freq"]
+    imputation_order_vals = ["random", "ascending", "descending"]
+
     def __init__(
         self,
         classifier_seed: list = LARGE_DATA_CLF_SEEDS,
         regression_seed: list = LARGE_DATA_REG_SEEDS,
+        imputation_order: int = 0,  # imputation_order_vals
+        baseline_imputer: int = 0,  # initial_strategy_vals
         optimizer: str = "simple",
-        baseline_imputer: str = "mean",
         class_threshold: int = 20,
         optimize_thresh: int = 1000,
         n_inner_iter: int = 50,
         n_outer_iter: int = 5,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
+        enable_reproducible_results(random_state)
         self.model = IterativeErrorCorrection(
             "hyperimpute_plugin",
             classifier_seed=classifier_seed,
             regression_seed=regression_seed,
             optimizer=optimizer,
-            baseline_imputer=baseline_imputer,
+            baseline_imputer=HyperImputePlugin.initial_strategy_vals[baseline_imputer],
+            imputation_order_strategy=HyperImputePlugin.imputation_order_vals[
+                imputation_order
+            ],
             class_threshold=class_threshold,
             optimize_thresh=optimize_thresh,
             n_inner_iter=n_inner_iter,
