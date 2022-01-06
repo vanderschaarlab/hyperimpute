@@ -11,22 +11,7 @@ import hyperimpute.plugins.prediction.regression.base as base
 
 
 class LinearRegressionPlugin(base.RegressionPlugin):
-    """Regression plugin based on the Linear Regression classifier.
-
-    Method:
-        Linear regression is a linear model for classification rather than regression. In this model, the probabilities describing the possible outcomes of a single trial are modeled using a linear function.
-
-    Args:
-        C: float
-            Inverse of regularization strength; must be a positive float.
-        solver: str
-            Algorithm to use in the optimization problem: [‘newton-cg’, ‘lbfgs’, ‘liblinear’, ‘sag’, ‘saga’]
-        multi_class: str
-            If the option chosen is ‘ovr’, then a binary problem is fit for each label. For ‘multinomial’ the loss minimised is the multinomial loss fit across the entire probability distribution, even when the data is binary. ‘multinomial’ is unavailable when solver=’liblinear’. ‘auto’ selects ‘ovr’ if the data is binary, or if solver=’liblinear’, and otherwise selects ‘multinomial’.
-        class_weight: str
-            Weights associated with classes in the form {class_label: weight}. If not given, all classes are supposed to have weight one.
-        max_iter: int
-            Maximum number of iterations taken for the solvers to converge.
+    """Regression plugin based on the Linear Regression.
 
     Example:
         >>> from hyperimpute.plugins.prediction import Predictions

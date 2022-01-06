@@ -4,12 +4,11 @@ from typing import Any, List, Union
 
 # third party
 import pandas as pd
-from sklearn.experimental import enable_iterative_imputer  # noqa: F401,E402
-from sklearn.impute import IterativeImputer
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
+from hyperimpute.plugins.imputers.plugin_hyperimpute import plugin as base_model
 
 
 class IterativeChainedEquationsPlugin(base.ImputerPlugin):
@@ -36,13 +35,9 @@ class IterativeChainedEquationsPlugin(base.ImputerPlugin):
         3  2.000000  2.000000  2.000000  2.000000
     """
 
-    initial_strategy_vals = ["mean", "median", "most_frequent"]
-    imputation_order_vals = ["ascending", "descending", "roman", "arabic", "random"]
-
     def __init__(
         self,
         max_iter: int = 1000,
-        tol: float = 0.001,
         initial_strategy: int = 0,
         imputation_order: int = 0,
         random_state: Union[int, None] = 0,
@@ -57,17 +52,15 @@ class IterativeChainedEquationsPlugin(base.ImputerPlugin):
         if not random_state:
             random_state = int(time.time())
 
-        self._model = IterativeImputer(
+        self._model = base_model(
+            classifier_seed=["logistic_regression"],
+            regression_seed=["linear_regression"],
+            imputation_order=imputation_order,
+            baseline_imputer=initial_strategy,
             random_state=random_state,
-            max_iter=max_iter,
-            tol=tol,
-            initial_strategy=IterativeChainedEquationsPlugin.initial_strategy_vals[
-                initial_strategy
-            ],
-            imputation_order=IterativeChainedEquationsPlugin.imputation_order_vals[
-                imputation_order
-            ],
-            sample_posterior=False,
+            n_inner_iter=max_iter,
+            n_outer_iter=1,
+            class_threshold=5,
         )
 
     @staticmethod
@@ -78,16 +71,15 @@ class IterativeChainedEquationsPlugin(base.ImputerPlugin):
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
         return [
             params.Integer("max_iter", 100, 1000, 100),
-            params.Categorical("tol", [1e-2, 1e-3, 1e-4]),
             params.Integer(
                 "initial_strategy",
                 0,
-                len(IterativeChainedEquationsPlugin.initial_strategy_vals) - 1,
+                len(base_model.initial_strategy_vals) - 1,
             ),
             params.Integer(
                 "imputation_order",
                 0,
-                len(IterativeChainedEquationsPlugin.imputation_order_vals) - 1,
+                len(base_model.imputation_order_vals) - 1,
             ),
         ]
 

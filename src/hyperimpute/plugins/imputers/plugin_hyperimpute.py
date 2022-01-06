@@ -585,6 +585,10 @@ class IterativeErrorCorrection:
         if col in self.categorical_cols:
             y_train = y_train.astype(int)
 
+        if len(np.unique(y_train)) == 1:
+            X[col][self.mask[col]] = np.asarray(y_train)[0]
+            return X
+
         est = copy.deepcopy(self.column_to_model[col])
 
         est.fit(X_train, y_train)
