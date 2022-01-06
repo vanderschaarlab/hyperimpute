@@ -8,7 +8,7 @@ import pytest
 
 # hyperimpute absolute
 from hyperimpute.plugins.imputers import ImputerPlugin, Imputers
-from hyperimpute.plugins.imputers.plugin_ice import plugin
+from hyperimpute.plugins.imputers.plugin_sklearn_ice import plugin
 from hyperimpute.plugins.utils.metrics import RMSE
 from hyperimpute.plugins.utils.simulate import simulate_nan
 from hyperimpute.utils.serialization import load_model, save_model
@@ -20,7 +20,7 @@ def from_serde() -> ImputerPlugin:
 
 
 def from_api() -> ImputerPlugin:
-    return Imputers().get("ice")
+    return Imputers().get("sklearn_ice")
 
 
 def from_module() -> ImputerPlugin:
@@ -34,7 +34,7 @@ def test_ice_plugin_sanity(test_plugin: ImputerPlugin) -> None:
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
 def test_ice_plugin_name(test_plugin: ImputerPlugin) -> None:
-    assert test_plugin.name() == "ice"
+    assert test_plugin.name() == "sklearn_ice"
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
@@ -44,7 +44,7 @@ def test_ice_plugin_type(test_plugin: ImputerPlugin) -> None:
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
 def test_ice_plugin_hyperparams(test_plugin: ImputerPlugin) -> None:
-    assert len(test_plugin.hyperparameter_space()) == 3
+    assert len(test_plugin.hyperparameter_space()) == 4
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])

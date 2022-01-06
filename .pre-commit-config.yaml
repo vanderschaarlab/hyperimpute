@@ -47,13 +47,3 @@ repos:
           "--disallow-untyped-defs",
           "--disallow-untyped-calls",
       ]
-- repo: local
-  hooks:
-  - id: flynt
-    name: flynt
-    entry: flynt
-    args: [--fail-on-change]
-    types: [python]
-    language: python
-    additional_dependencies:
-        - flynt
