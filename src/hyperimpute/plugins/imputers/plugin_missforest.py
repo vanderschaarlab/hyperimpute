@@ -4,13 +4,11 @@ from typing import Any, List, Union
 
 # third party
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.experimental import enable_iterative_imputer  # noqa: F401,E402
-from sklearn.impute import IterativeImputer
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
+from hyperimpute.plugins.imputers.plugin_hyperimpute import plugin as base_model
 import hyperimpute.plugins.utils.decorators as decorators
 
 
@@ -47,9 +45,9 @@ class MissForestPlugin(base.ImputerPlugin):
         self,
         n_estimators: int = 10,
         max_iter: int = 100,
-        max_depth: int = 3,
-        bootstrap: bool = True,
         random_state: Union[int, None] = 0,
+        initial_strategy: int = 0,
+        imputation_order: int = 0,
         model: Any = None,
     ) -> None:
         super().__init__()
@@ -61,14 +59,15 @@ class MissForestPlugin(base.ImputerPlugin):
         if not random_state:
             random_state = int(time.time())
 
-        estimator_rf = RandomForestRegressor(
-            n_estimators=n_estimators,
-            max_depth=max_depth,
-            bootstrap=bootstrap,
-            n_jobs=-1,
-        )
-        self._model = IterativeImputer(
-            estimator=estimator_rf, random_state=random_state, max_iter=max_iter
+        self._model = base_model(
+            classifier_seed=["random_forest"],
+            regression_seed=["random_forest_regressor"],
+            imputation_order=imputation_order,
+            baseline_imputer=initial_strategy,
+            random_state=random_state,
+            n_inner_iter=max_iter,
+            n_outer_iter=1,
+            class_threshold=5,
         )
 
     @staticmethod

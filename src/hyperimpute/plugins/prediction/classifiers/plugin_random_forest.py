@@ -66,7 +66,7 @@ class RandomForestPlugin(base.ClassifierPlugin):
             criterion=RandomForestPlugin.criterions[criterion],
             max_features=RandomForestPlugin.features[max_features],
             min_samples_split=min_samples_split,
-            max_depth=4,
+            max_depth=3,
             bootstrap=bootstrap,
             min_samples_leaf=min_samples_leaf,
             n_jobs=-1,
