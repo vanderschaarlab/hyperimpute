@@ -664,7 +664,7 @@ class IterativeErrorCorrection:
 class HyperImputePlugin(base.ImputerPlugin):
     """HyperImpute strategy."""
 
-    initial_strategy_vals = ["mean", "median", "most_freq"]
+    initial_strategy_vals = ["mean", "median", "most_frequent"]
     imputation_order_vals = ["random", "ascending", "descending"]
 
     def __init__(
