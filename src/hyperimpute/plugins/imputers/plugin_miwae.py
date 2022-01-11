@@ -77,7 +77,7 @@ class MIWAEPlugin(base.ImputerPlugin):
         logpxobsgivenz = torch.sum(all_log_pxgivenz * tiledmask, 1).reshape(
             [self.K, batch_size]
         )
-        logpz = self.p_z.log_prob(zgivenx)
+        logpz = self.p_z.log_prob(zgivenx.to(DEVICE))
         logq = q_zgivenxobs.log_prob(zgivenx)
 
         neg_bound = -torch.mean(torch.logsumexp(logpxobsgivenz + logpz - logq, 0))
@@ -156,7 +156,10 @@ class MIWAEPlugin(base.ImputerPlugin):
         p = X.shape[1]  # number of features
 
         self.p_z = td.Independent(
-            td.Normal(loc=torch.zeros(self.d), scale=torch.ones(self.d)), 1
+            td.Normal(
+                loc=torch.zeros(self.d).to(DEVICE), scale=torch.ones(self.d).to(DEVICE)
+            ),
+            1,
         )
 
         self.decoder = nn.Sequential(
