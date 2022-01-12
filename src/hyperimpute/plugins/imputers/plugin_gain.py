@@ -157,8 +157,8 @@ class GainImputation(TransformerMixin):
 
     def __init__(
         self,
-        batch_size: int = 128,
-        iterations: int = 10000,
+        batch_size: int = 256,
+        iterations: int = 1000,
         hint_rate: float = 0.9,
         loss_alpha: float = 10,
     ) -> None:

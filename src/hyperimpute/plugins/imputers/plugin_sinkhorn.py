@@ -13,6 +13,8 @@ import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
 import hyperimpute.plugins.utils.decorators as decorators
 
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class SinkhornImputation(TransformerMixin):
     """Sinkhorn imputation can be used to impute quantitative data and it relies on the idea that two batches extracted randomly from the same dataset should share the same distribution and consists in minimizing optimal transport distances between batches.
@@ -33,7 +35,7 @@ class SinkhornImputation(TransformerMixin):
         niter : int, default=15
             Number of gradient updates for each model within a cycle.
 
-        batchsize : int, defatul=128
+        batchsize : int, defatul=256
             Size of the batches on which the sinkhorn divergence is evaluated.
 
         n_pairs : int, default=10
@@ -52,7 +54,7 @@ class SinkhornImputation(TransformerMixin):
         lr: float = 1e-2,
         opt: Any = torch.optim.Adam,
         niter: int = 500,
-        batchsize: int = 128,
+        batchsize: int = 256,
         n_pairs: int = 1,
         noise: float = 1e-2,
         scaling: float = 0.9,
@@ -69,7 +71,7 @@ class SinkhornImputation(TransformerMixin):
         )
 
     def fit_transform(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
-        X = torch.tensor(X.values)
+        X = torch.tensor(X.values).to(DEVICE)
         X = X.clone()
         n, d = X.shape
 
@@ -77,10 +79,12 @@ class SinkhornImputation(TransformerMixin):
             e = int(np.log2(n // 2))
             self.batchsize = 2 ** e
 
-        mask = torch.isnan(X).double()
-        imps = (self.noise * torch.randn(mask.shape).double() + np.nanmean(X, 0))[
+        mask = torch.isnan(X).double().cpu()
+        imps = (self.noise * torch.randn(mask.shape).double() + np.nanmean(X.cpu(), 0))[
             mask.bool()
         ]
+        imps = imps.to(DEVICE)
+        mask = mask.to(DEVICE)
         imps.requires_grad = True
 
         optimizer = self.opt([imps], lr=self.lr)
@@ -111,7 +115,7 @@ class SinkhornImputation(TransformerMixin):
         X_filled = X.detach().clone()
         X_filled[mask.bool()] = imps
 
-        return X_filled.detach().numpy()
+        return X_filled.detach().cpu().numpy()
 
 
 class SinkhornPlugin(base.ImputerPlugin):
@@ -138,7 +142,7 @@ class SinkhornPlugin(base.ImputerPlugin):
         lr: float = 1e-2,
         opt: Any = torch.optim.Adam,
         niter: int = 500,
-        batchsize: int = 128,
+        batchsize: int = 256,
         n_pairs: int = 1,
         noise: float = 1e-2,
         scaling: float = 0.9,

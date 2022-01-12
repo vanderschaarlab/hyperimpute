@@ -1,5 +1,6 @@
 # stdlib
 import copy
+from time import time
 from typing import Any
 import warnings
 
@@ -218,7 +219,9 @@ def evaluate_dataset_repeated_internal(
     miss_pct: list = [0.1, 0.3, 0.5, 0.7],
     n_iter: int = 2,
     debug: bool = False,
-) -> None:
+) -> dict:
+    start = time()
+
     def add_metrics(
         store: dict, scenario: str, missingness: float, method: str, score: float
     ) -> None:
@@ -304,6 +307,7 @@ def evaluate_dataset_repeated_internal(
             distr_results.append(local_distr_results)
             downstream_results.append(local_downstream_results)
 
+    print("benchmark took ", time() - start)
     headers = ["Scenario", "miss_pct [0, 1]"] + ["Our method"] + ref_methods
 
     sep = "\n==========================================================\n\n"
@@ -318,3 +322,10 @@ def evaluate_dataset_repeated_internal(
     display(
         HTML(tabulate.tabulate(downstream_results, headers=headers, tablefmt="html"))
     )
+
+    return {
+        "headers": headers,
+        "rmse": rmse_results,
+        "wasserstein": distr_results,
+        "downstream": downstream_results,
+    }

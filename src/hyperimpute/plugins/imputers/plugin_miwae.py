@@ -22,13 +22,20 @@ def weights_init(layer: Any) -> None:
 
 
 class MIWAEPlugin(base.ImputerPlugin):
-    def __init__(self, n_epochs: int = 2000, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        n_epochs: int = 2000,
+        batch_size: int = 256,
+        latent_size: int = 1,
+        n_hidden: int = 1,
+        **kwargs: Any,
+    ) -> None:
         super().__init__()
 
         self.n_epochs = n_epochs
-        self.bs = 64  # batch size
-        self.h = 128  # number of hidden units in (same for all MLPs)
-        self.d = 1  # dimension of the latent space
+        self.bs = batch_size  # batch size
+        self.h = n_hidden  # number of hidden units in (same for all MLPs)
+        self.d = latent_size  # dimension of the latent space
         self.K = 20  # number of IS during training
 
     @staticmethod
@@ -64,8 +71,8 @@ class MIWAEPlugin(base.ImputerPlugin):
             torch.nn.Softplus()(out_decoder[..., (2 * p) : (3 * p)]) + 3
         )
 
-        data_flat = torch.Tensor.repeat(iota_x, [self.K, 1]).reshape([-1, 1])
-        tiledmask = torch.Tensor.repeat(mask, [self.K, 1])
+        data_flat = torch.Tensor.repeat(iota_x, [self.K, 1]).reshape([-1, 1]).to(DEVICE)
+        tiledmask = torch.Tensor.repeat(mask, [self.K, 1]).to(DEVICE)
 
         all_log_pxgivenz_flat = torch.distributions.StudentT(
             loc=all_means_obs_model.reshape([-1, 1]),
@@ -145,12 +152,11 @@ class MIWAEPlugin(base.ImputerPlugin):
         return xm
 
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "MIWAEPlugin":
-        X = np.asarray(X)
+        X = torch.from_numpy(np.asarray(X)).float().to(DEVICE)
+        mask = np.isfinite(X.cpu()).bool().to(DEVICE)
 
-        mask = np.isfinite(X)
-
-        xhat_0 = np.copy(X)
-        xhat_0[np.isnan(X)] = 0
+        xhat_0 = torch.clone(X)
+        xhat_0[np.isnan(X.cpu())] = 0
 
         n = X.shape[0]  # number of observations
         p = X.shape[1]  # number of features
@@ -186,7 +192,7 @@ class MIWAEPlugin(base.ImputerPlugin):
             list(self.encoder.parameters()) + list(self.decoder.parameters()), lr=1e-3
         )
 
-        xhat = np.copy(xhat_0)  # This will be out imputed data matrix
+        xhat = torch.clone(xhat_0)  # This will be out imputed data matrix
 
         self.encoder.apply(weights_init)
         self.decoder.apply(weights_init)
@@ -201,20 +207,20 @@ class MIWAEPlugin(base.ImputerPlugin):
                 xhat_0[
                     perm,
                 ],
-                n / bs,
+                int(n / bs),
             )
             batches_mask = np.array_split(
                 mask[
                     perm,
                 ],
-                n / bs,
+                int(n / bs),
             )
             for it in range(len(batches_data)):
                 optimizer.zero_grad()
                 self.encoder.zero_grad()
                 self.decoder.zero_grad()
-                b_data = torch.from_numpy(batches_data[it]).float().to(DEVICE)
-                b_mask = torch.from_numpy(batches_mask[it]).float().to(DEVICE)
+                b_data = batches_data[it]
+                b_mask = batches_mask[it].float()
                 loss = self._miwae_loss(iota_x=b_data, mask=b_mask)
                 loss.backward()
                 optimizer.step()
@@ -224,47 +230,34 @@ class MIWAEPlugin(base.ImputerPlugin):
                     "MIWAE likelihood bound  %g"
                     % (
                         -np.log(self.K)
-                        - self._miwae_loss(
-                            iota_x=torch.from_numpy(xhat_0).float().to(DEVICE),
-                            mask=torch.from_numpy(mask).float().to(DEVICE),
-                        )
-                        .cpu()
-                        .data.numpy()
+                        - self._miwae_loss(iota_x=xhat_0, mask=mask).cpu().data.numpy()
                     )
                 )  # Gradient step
 
                 # Now we do the imputation
 
-                xhat[~mask] = (
-                    self._miwae_impute(
-                        iota_x=torch.from_numpy(xhat_0).float().to(DEVICE),
-                        mask=torch.from_numpy(mask).float().to(DEVICE),
-                        L=10,
-                    )
-                    .cpu()
-                    .data.numpy()[~mask]
-                )
+                xhat[~mask] = self._miwae_impute(
+                    iota_x=xhat_0,
+                    mask=mask,
+                    L=10,
+                )[~mask]
 
         return self
 
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = np.asarray(X)
-        mask = np.isfinite(X)
+        X = torch.from_numpy(np.asarray(X)).float().to(DEVICE)
+        mask = np.isfinite(X.cpu()).bool().to(DEVICE)
 
-        xhat = np.copy(X)
-        xhat[np.isnan(X)] = 0
+        xhat = torch.clone(X)
+        xhat[np.isnan(X.cpu())] = 0
 
-        xhat[~mask] = (
-            self._miwae_impute(
-                iota_x=torch.from_numpy(xhat).float().to(DEVICE),
-                mask=torch.from_numpy(mask).float().to(DEVICE),
-                L=10,
-            )
-            .cpu()
-            .data.numpy()[~mask]
-        )
+        xhat[~mask] = self._miwae_impute(
+            iota_x=xhat,
+            mask=mask,
+            L=10,
+        )[~mask]
 
-        return xhat
+        return xhat.detach().cpu().numpy()
 
 
 plugin = MIWAEPlugin
