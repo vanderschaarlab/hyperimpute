@@ -25,8 +25,14 @@ from hyperimpute.utils.tester import evaluate_estimator, evaluate_regression
 
 TOL = 1e-3
 
-SMALL_DATA_CLF_SEEDS = ["logistic_regression", "random_forest"]
-SMALL_DATA_REG_SEEDS = ["linear_regression", "random_forest_regressor"]
+SMALL_DATA_CLF_SEEDS = [
+    "random_forest",
+    "logistic_regression",
+]
+SMALL_DATA_REG_SEEDS = [
+    "random_forest_regressor",
+    "linear_regression",
+]
 
 LARGE_DATA_CLF_SEEDS = SMALL_DATA_CLF_SEEDS + [
     "xgboost",
@@ -225,6 +231,7 @@ class BayesianOptimizer:
         self.name = name
         self.category = category
 
+        self.failure_score = -9999999
         if category == "classifier":
             self.seeds = classifier_seed
         else:
@@ -242,7 +249,7 @@ class BayesianOptimizer:
                 patience=self.patience,
             )
 
-        self.best_score = -9999
+        self.best_score = self.failure_score
         self.best_candidate = self.seeds[0]
         self.best_params: dict = {}
 
@@ -269,7 +276,7 @@ class BayesianOptimizer:
                     out = evaluate_estimator(model, X, y)
                     score = out["clf"]["aucroc"][0]
             except BaseException:
-                score = -9999
+                score = self.failure_score
 
             return score
 
@@ -343,16 +350,18 @@ class SimpleOptimizer:
         self.name = name
         self.category = category
 
+        self.failure_score = -9999999
         if category == "classifier":
             self.seeds = classifier_seed
         else:
             self.seeds = regression_seed
 
         self.candidate = {
-            "score": -np.inf,
-            "name": "nop",
+            "score": self.failure_score,
+            "name": self.seeds[0],
             "params": {},
         }
+
         self.predictions = Predictions(category=category)
 
         self.model_best_score = {}
@@ -372,7 +381,7 @@ class SimpleOptimizer:
                 score = out["clf"]["aucroc"][0]
         except BaseException as e:
             log.error(f"      >>> {self.name}:{model_name}: eval failed {e}")
-            score = -9999
+            score = self.failure_score
 
         if score > self.candidate["score"]:
             self.candidate = {
