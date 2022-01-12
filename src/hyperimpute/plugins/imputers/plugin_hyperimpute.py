@@ -411,6 +411,7 @@ class IterativeErrorCorrection:
         imputation_order_strategy: str = "random",
         n_inner_iter: int = 50,
         n_outer_iter: int = 5,
+        train_step: int = 20,
     ):
         if optimizer not in [
             "hyperband",
@@ -429,6 +430,7 @@ class IterativeErrorCorrection:
         self.classifier_seed = classifier_seed
         self.regression_seed = regression_seed
         self.imputation_order_strategy = imputation_order_strategy
+        self.train_step = train_step
 
         self.optimizer: Any
         if optimizer == "hyperband":
@@ -531,9 +533,35 @@ class IterativeErrorCorrection:
 
         return covs
 
+    def _is_same_type(self, lhs: str, rhs: str) -> bool:
+        ltype = lhs in self.categorical_cols
+        rtype = rhs in self.categorical_cols
+
+        return ltype == rtype
+
+    def _check_similar(self, X: pd.DataFrame, col: str) -> Any:
+        similar_cols = []
+        for ref_col in self.column_to_model:
+            if not self._is_same_type(ref_col, col):
+                continue
+
+            arch = self.column_to_model[ref_col].name()
+
+            if arch in similar_cols:
+                return copy.deepcopy(self.column_to_model[ref_col])
+
+            similar_cols.append(self.column_to_model[ref_col].name())
+
+        return None
+
     def _optimize_model_for_column(self, X: pd.DataFrame, col: str) -> dict:
         # BO evaluation for a single column
         if self.mask[col].sum() == 0:
+            return self.column_to_model
+
+        similar_candidate = self._check_similar(X, col)
+        if similar_candidate is not None:
+            self.column_to_model[col] = similar_candidate
             return self.column_to_model
 
         cov_cols = self._get_neighbors_for_col(col)
@@ -563,13 +591,15 @@ class IterativeErrorCorrection:
 
     def _optimize(self, X: pd.DataFrame) -> dict:
         # BO evaluation to select the best models for each columns
-
+        self.column_to_model = {}
         for col in self.imputation_order:
             self._optimize_model_for_column(X, col)
 
         return self.column_to_model
 
-    def _impute_single_column(self, X: pd.DataFrame, col: str) -> pd.DataFrame:
+    def _impute_single_column(
+        self, X: pd.DataFrame, col: str, train: bool
+    ) -> pd.DataFrame:
         # Run an iteration of imputation on a column
         if self.mask[col].sum() == 0:
             return X
@@ -589,9 +619,10 @@ class IterativeErrorCorrection:
             X[col][self.mask[col]] = np.asarray(y_train)[0]
             return X
 
-        est = copy.deepcopy(self.column_to_model[col])
+        est = self.column_to_model[col]
 
-        est.fit(X_train, y_train)
+        if train:
+            est.fit(X_train, y_train)
 
         X[col][self.mask[col]] = est.predict(covs[self.mask[col]]).values.squeeze()
 
@@ -609,12 +640,12 @@ class IterativeErrorCorrection:
             random.shuffle(self.imputation_order)
             return self.imputation_order
 
-    def _iterate_imputation(self, X: pd.DataFrame) -> pd.DataFrame:
+    def _iterate_imputation(self, X: pd.DataFrame, train: bool) -> pd.DataFrame:
         # Run an iteration of imputation on all columns
         cols = self._get_imputation_order()
 
         for col in cols:
-            X = self._impute_single_column(X, col)
+            X = self._impute_single_column(X, col, train)
         return X
 
     def _initial_imputation(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -647,9 +678,15 @@ class IterativeErrorCorrection:
 
             self._optimize(Xt.copy())
 
+            next_train = 0
             for it in range(self.n_inner_iter):
                 Xt_prev = Xt.copy()
-                Xt = self._iterate_imputation(Xt_prev.copy())
+
+                train = False
+                if it >= next_train:
+                    train = True
+                    next_train += self.train_step
+                Xt = self._iterate_imputation(Xt_prev.copy(), train=train)
 
                 inf_norm = np.linalg.norm(Xt - Xt_prev, ord=np.inf, axis=None)
                 if inf_norm < TOL:
@@ -678,6 +715,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         optimize_thresh: int = 1000,
         n_inner_iter: int = 50,
         n_outer_iter: int = 5,
+        train_step: int = 20,
         random_state: int = 0,
     ) -> None:
         super().__init__()
@@ -696,6 +734,7 @@ class HyperImputePlugin(base.ImputerPlugin):
             optimize_thresh=optimize_thresh,
             n_inner_iter=n_inner_iter,
             n_outer_iter=n_outer_iter,
+            train_step=train_step,
         )
 
     @staticmethod

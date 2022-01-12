@@ -44,6 +44,7 @@ class RegressionPlugin(prediction_base.PredictionPlugin):
 
         X = cast.to_dataframe(X)
         self._fit(X, *args, **kwargs)
+        self.fitted = True
 
         return self
 

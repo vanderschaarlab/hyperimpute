@@ -32,6 +32,7 @@ class Plugin(metaclass=ABCMeta):
 
     def __init__(self) -> None:
         self.output = pd.DataFrame
+        self.fitted = False
 
     def change_output(self, output: str) -> None:
         if output not in ["pandas", "numpy"]:
@@ -122,7 +123,19 @@ class Plugin(metaclass=ABCMeta):
 
     def fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "Plugin":
         X = cast.to_dataframe(X)
-        return self._fit(X, *args, **kwargs)
+
+        out = self._fit(X, *args, **kwargs)
+        self.fitted = True
+
+        return out
+
+    @property
+    def fitted(self) -> bool:
+        return self._fitted
+
+    @fitted.setter
+    def fitted(self, value: bool) -> None:
+        self._fitted = value
 
     @abstractmethod
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "Plugin":
