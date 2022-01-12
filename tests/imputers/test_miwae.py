@@ -61,7 +61,7 @@ def test_miwae_plugin_fit_transform(test_plugin: ImputerPlugin) -> None:
 @pytest.mark.slow
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
 @pytest.mark.parametrize("mechanism", ["MAR"])
-@pytest.mark.parametrize("p_miss", [0.5])
+@pytest.mark.parametrize("p_miss", [0.3])
 @pytest.mark.parametrize(
     "other_plugin",
     [Imputers().get("most_frequent")],

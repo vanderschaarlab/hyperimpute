@@ -24,7 +24,7 @@ def weights_init(layer: Any) -> None:
 class MIWAEPlugin(base.ImputerPlugin):
     def __init__(
         self,
-        n_epochs: int = 2000,
+        n_epochs: int = 500,
         batch_size: int = 256,
         latent_size: int = 1,
         n_hidden: int = 1,
