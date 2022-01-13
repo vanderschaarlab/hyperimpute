@@ -25,7 +25,7 @@ class MIWAEPlugin(base.ImputerPlugin):
     def __init__(
         self,
         n_epochs: int = 1000,
-        batch_size: int = 256,
+        batch_size: int = 1024,
         latent_size: int = 1,
         n_hidden: int = 1,
         **kwargs: Any,
