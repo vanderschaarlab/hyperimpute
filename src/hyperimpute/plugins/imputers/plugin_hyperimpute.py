@@ -23,7 +23,7 @@ from hyperimpute.utils.distributions import enable_reproducible_results
 from hyperimpute.utils.optimizer import EarlyStoppingExceeded, create_study
 from hyperimpute.utils.tester import evaluate_estimator, evaluate_regression
 
-TOL = 1e-3
+TOL = 1e-8
 
 SMALL_DATA_CLF_SEEDS = [
     "random_forest",
@@ -69,6 +69,7 @@ class HyperbandOptimizer:
     ) -> None:
         self.name = name
         self.category = category
+        self.failure_score = -9999999
 
         if category == "classifier":
             self.seeds = classifier_seed
@@ -86,8 +87,8 @@ class HyperbandOptimizer:
         self.B = (self.s_max + 1) * self.max_iter
 
         self.candidate = {
-            "score": -np.inf,
-            "name": "nop",
+            "score": self.failure_score,
+            "name": self.seeds[0],
             "params": {},
         }
         self.visited: Set[str] = set()
@@ -137,16 +138,18 @@ class HyperbandOptimizer:
         self, model_name: str, X: pd.DataFrame, y: pd.DataFrame, **params: Any
     ) -> float:
         model = self.predictions.get(model_name, **params)
-        try:
-            if self.category == "regression":
-                out = evaluate_regression(model, X, y, n_folds=2)
-                score = -out["clf"]["rmse"][0]
-            else:
-                out = evaluate_estimator(model, X, y, n_folds=2)
-                score = out["clf"]["aucroc"][0]
-        except BaseException as e:
-            log.error(f"      >>> {self.name}:{model_name}: eval failed {e}")
-            score = -9999
+        for n_folds in [2, 1]:
+            try:
+                if self.category == "regression":
+                    out = evaluate_regression(model, X, y, n_folds=n_folds)
+                    score = -out["clf"]["rmse"][0]
+                else:
+                    out = evaluate_estimator(model, X, y, n_folds=n_folds)
+                    score = out["clf"]["aucroc"][0]
+                break
+            except BaseException as e:
+                log.error(f"      >>> {self.name}:{model_name}: eval failed {e}")
+                score = self.failure_score
 
         if score > self.candidate["score"]:
             self.candidate = {
@@ -268,15 +271,17 @@ class BayesianOptimizer:
 
         def evaluate_args(**kwargs: Any) -> float:
             model = plugin(**kwargs)
-            try:
-                if self.category == "regression":
-                    out = evaluate_regression(model, X, y)
-                    score = -out["clf"]["rmse"][0]
-                else:
-                    out = evaluate_estimator(model, X, y)
-                    score = out["clf"]["aucroc"][0]
-            except BaseException:
-                score = self.failure_score
+            for n_folds in [2, 1]:
+                try:
+                    if self.category == "regression":
+                        out = evaluate_regression(model, X, y, n_folds=n_folds)
+                        score = -out["clf"]["rmse"][0]
+                    else:
+                        out = evaluate_estimator(model, X, y, n_folds=n_folds)
+                        score = out["clf"]["aucroc"][0]
+                    break
+                except BaseException:
+                    score = self.failure_score
 
             return score
 
@@ -313,7 +318,7 @@ class BayesianOptimizer:
         return study.best_value, study.best_trial.params
 
     def evaluate(self, X_train: pd.DataFrame, y_train: pd.DataFrame) -> Any:
-        best_score = -9999
+        best_score = self.failure_score
 
         if self.category == "classifier":
             mapped_labels = sorted(y_train.unique())
@@ -351,6 +356,8 @@ class SimpleOptimizer:
         self.category = category
 
         self.failure_score = -9999999
+        self.classifier_seed = classifier_seed
+        self.regression_seed = regression_seed
         if category == "classifier":
             self.seeds = classifier_seed
         else:
@@ -372,16 +379,20 @@ class SimpleOptimizer:
         self, model_name: str, X: pd.DataFrame, y: pd.DataFrame, **params: Any
     ) -> float:
         model = self.predictions.get(model_name, **params)
-        try:
-            if self.category == "regression":
-                out = evaluate_regression(model, X, y, n_folds=2)
-                score = -out["clf"]["rmse"][0]
-            else:
-                out = evaluate_estimator(model, X, y, n_folds=2)
-                score = out["clf"]["aucroc"][0]
-        except BaseException as e:
-            log.error(f"      >>> {self.name}:{model_name}: eval failed {e}")
-            score = self.failure_score
+        for n_folds in [2, 1]:
+            try:
+                if self.category == "regression":
+                    out = evaluate_regression(model, X, y, n_folds=n_folds)
+                    score = -out["clf"]["rmse"][0]
+                else:
+                    out = evaluate_estimator(model, X, y, n_folds=n_folds)
+                    score = out["clf"]["aucroc"][0]
+                break
+            except BaseException as e:
+                log.error(
+                    f"      >>> {self.name}:{model_name}:{n_folds} folds eval failed {e}"
+                )
+                score = self.failure_score
 
         if score > self.candidate["score"]:
             self.candidate = {
@@ -419,6 +430,7 @@ class IterativeErrorCorrection:
         optimize_thresh_upper: int = 3000,
         imputation_order_strategy: str = "random",
         n_inner_iter: int = 50,
+        n_min_inner_iter: int = 10,
         n_outer_iter: int = 5,
         train_step: int = 20,
     ):
@@ -436,6 +448,7 @@ class IterativeErrorCorrection:
         self.optimize_thresh_upper = optimize_thresh_upper
         self.n_inner_iter = n_inner_iter
         self.n_outer_iter = n_outer_iter
+        self.n_min_inner_iter = n_min_inner_iter
         self.classifier_seed = classifier_seed
         self.regression_seed = regression_seed
         self.imputation_order_strategy = imputation_order_strategy
@@ -698,9 +711,9 @@ class IterativeErrorCorrection:
                 Xt = self._iterate_imputation(Xt_prev.copy(), train=train)
 
                 inf_norm = np.linalg.norm(Xt - Xt_prev, ord=np.inf, axis=None)
-                if inf_norm < TOL:
+                if inf_norm < TOL and it > self.n_min_inner_iter:
                     log.info(
-                        f"     >>>> Early stopping on iteration diff {mean_squared_error(Xt_prev, Xt)}"
+                        f"     >>>> Early stopping on iteration diff iteration : {it} err: {mean_squared_error(Xt_prev, Xt)}"
                     )
                     break
 
@@ -720,7 +733,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         imputation_order: int = 0,  # imputation_order_vals
         baseline_imputer: int = 0,  # initial_strategy_vals
         optimizer: str = "simple",
-        class_threshold: int = 20,
+        class_threshold: int = 5,
         optimize_thresh: int = 1000,
         n_inner_iter: int = 50,
         n_outer_iter: int = 5,

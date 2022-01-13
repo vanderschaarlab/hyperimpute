@@ -31,8 +31,9 @@ def get_y_pred_proba_hlpr(y_pred_proba: np.ndarray, nclasses: int) -> np.ndarray
 def evaluate_auc(
     y_test: np.ndarray,
     y_pred_proba: np.ndarray,
+    metric: str = "aucroc",
     classes: Union[np.ndarray, None] = None,
-) -> Tuple[float, float]:
+) -> float:
 
     y_test = np.asarray(y_test)
     y_pred_proba = np.asarray(y_pred_proba)
@@ -81,14 +82,19 @@ def evaluate_auc(
             y_test, y_pred_proba_tmp, average="micro"
         )
 
-        aucroc = roc_auc["micro"]
-        aucprc = average_precision["micro"]
+        if metric == "aucroc":
+            return roc_auc["micro"]
+        elif metric == "aucprc":
+            return average_precision["micro"]
+        else:
+            raise RuntimeError(f"invalid evaluation metric {metric}")
     else:
-
-        aucroc = roc_auc_score(np.ravel(y_test), y_pred_proba_tmp)
-        aucprc = average_precision_score(np.ravel(y_test), y_pred_proba_tmp)
-
-    return aucroc, aucprc
+        if metric == "aucroc":
+            return roc_auc_score(np.ravel(y_test), y_pred_proba_tmp)
+        elif metric == "aucprc":
+            return average_precision_score(np.ravel(y_test), y_pred_proba_tmp)
+        else:
+            raise RuntimeError(f"invalid evaluation metric {metric}")
 
 
 def generate_score(metric: np.ndarray) -> Tuple[float, float]:

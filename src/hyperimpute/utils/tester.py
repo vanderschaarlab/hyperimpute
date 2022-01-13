@@ -1,12 +1,12 @@
 # stdlib
 import copy
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 # third party
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 
 # hyperimpute absolute
 import hyperimpute.logger as log
@@ -50,14 +50,15 @@ class Eval:
         return score_val
 
     def roc_auc_score(self, y_test: np.ndarray, y_pred_proba: np.ndarray) -> float:
+        assert self.m_metric == "aucroc"
 
-        return evaluate_auc(y_test, y_pred_proba)[0]
+        return evaluate_auc(y_test, y_pred_proba, self.m_metric)
 
     def average_precision_score(
         self, y_test: np.ndarray, y_pred_proba: np.ndarray
     ) -> float:
-
-        return evaluate_auc(y_test, y_pred_proba)[1]
+        assert self.m_metric == "aucprc"
+        return evaluate_auc(y_test, y_pred_proba, self.m_metric)
 
 
 def evaluate_estimator(
@@ -78,18 +79,14 @@ def evaluate_estimator(
 
     metric_ = np.zeros(n_folds)
 
-    indx = 0
-    skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=seed)
-
     ev = Eval(metric)
 
-    for train_index, test_index in skf.split(X, Y):
-
-        X_train = X.loc[X.index[train_index]]
-        Y_train = Y.loc[Y.index[train_index]]
-        X_test = X.loc[X.index[test_index]]
-        Y_test = Y.loc[Y.index[test_index]]
-
+    def eval_iteration(
+        X_train: pd.DataFrame,
+        X_test: pd.DataFrame,
+        Y_train: pd.DataFrame,
+        Y_test: pd.DataFrame,
+    ) -> float:
         if pretrained:
             model = estimator[indx]
         else:
@@ -98,9 +95,56 @@ def evaluate_estimator(
 
         preds = model.predict_proba(X_test)
 
-        metric_[indx] = ev.score_proba(Y_test, preds)
+        return ev.score_proba(Y_test, preds)
 
-        indx += 1
+    def sanitize_input(
+        X_train: pd.DataFrame,
+        X_test: pd.DataFrame,
+        Y_train: pd.DataFrame,
+        Y_test: pd.DataFrame,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        for outcome in np.unique(Y_test):
+            outcome_cnt = (np.asarray(Y_train) == outcome).sum()
+            if outcome_cnt == 0:
+                arr_filter = Y_test.values.ravel() != outcome
+
+                X_test = X_test.loc[arr_filter]
+                Y_test = Y_test.loc[arr_filter]
+
+        for outcome in np.unique(Y_train):
+            outcome_cnt = (np.asarray(Y_test) == outcome).sum()
+            if outcome_cnt == 0:
+                arr_filter = Y_train.values.ravel() != outcome
+
+                X_train = X_train.loc[arr_filter]
+                Y_train = Y_train.loc[arr_filter]
+
+        return X_train, X_test, Y_train, Y_test
+
+    indx = 0
+    if n_folds == 1:
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=seed)
+
+        X_train, X_test, Y_train, Y_test = sanitize_input(
+            X_train, X_test, Y_train, Y_test
+        )
+        metric_[indx] = eval_iteration(X_train, X_test, Y_train, Y_test)
+    else:
+        skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=seed)
+        for train_index, test_index in skf.split(X, Y):
+
+            X_train = X.loc[X.index[train_index]]
+            Y_train = Y.loc[Y.index[train_index]]
+            X_test = X.loc[X.index[test_index]]
+            Y_test = Y.loc[Y.index[test_index]]
+
+            X_train, X_test, Y_train, Y_test = sanitize_input(
+                X_train, X_test, Y_train, Y_test
+            )
+
+            metric_[indx] = eval_iteration(X_train, X_test, Y_train, Y_test)
+
+            indx += 1
 
     output_clf = generate_score(metric_)
 
@@ -145,23 +189,37 @@ def evaluate_regression(
     metric_ = np.zeros(n_folds)
 
     indx = 0
-    skf = KFold(n_splits=n_folds, shuffle=True, random_state=seed)
 
-    for train_index, test_index in skf.split(X, Y):
-
-        X_train = X.loc[X.index[train_index]]
-        Y_train = Y.loc[Y.index[train_index]]
-        X_test = X.loc[X.index[test_index]]
-        Y_test = Y.loc[Y.index[test_index]]
-
+    def eval_iteration(
+        X_train: pd.DataFrame,
+        X_test: pd.DataFrame,
+        Y_train: pd.DataFrame,
+        Y_test: pd.DataFrame,
+    ) -> float:
         model = copy.deepcopy(estimator)
         model.fit(X_train, Y_train)
 
         preds = model.predict(X_test)
 
-        metric_[indx] = mean_squared_error(Y_test, preds)
+        return mean_squared_error(Y_test, preds)
 
-        indx += 1
+    if n_folds == 1:
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=seed)
+
+        metric_[indx] = eval_iteration(X_train, X_test, Y_train, Y_test)
+    else:
+        skf = KFold(n_splits=n_folds, shuffle=True, random_state=seed)
+
+        for train_index, test_index in skf.split(X, Y):
+
+            X_train = X.loc[X.index[train_index]]
+            Y_train = Y.loc[Y.index[train_index]]
+            X_test = X.loc[X.index[test_index]]
+            Y_test = Y.loc[Y.index[test_index]]
+
+            metric_[indx] = eval_iteration(X_train, X_test, Y_train, Y_test)
+
+            indx += 1
 
     output_clf = generate_score(metric_)
 
