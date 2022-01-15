@@ -37,14 +37,17 @@ class MiraclePlugin(base.ImputerPlugin):
         window: int = 10,
         max_steps: int = 400,
         seed_imputation: str = "mean",
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         super().__init__()
 
-        assert seed_imputation in [
+        if seed_imputation not in [
             "mean",
             "median",
-        ]
+        ]:
+            raise RuntimeError(
+                f"invalid seed imputation for MIRACLE: {seed_imputation}"
+            )
 
         self.lr = lr
         self.batch_size = batch_size

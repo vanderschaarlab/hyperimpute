@@ -63,7 +63,7 @@ def scale_data(X: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(preproc.fit_transform(X), columns=cols)
 
 
-def simulate_scenarios(X: pd.DataFrame) -> pd.DataFrame:
+def simulate_scenarios(X: pd.DataFrame, column_limit: int = 8) -> pd.DataFrame:
     X = scale_data(X)
 
     datasets: dict = {}
@@ -76,7 +76,9 @@ def simulate_scenarios(X: pd.DataFrame) -> pd.DataFrame:
             if ampute_mechanism not in datasets:
                 datasets[ampute_mechanism] = {}
 
-            datasets[ampute_mechanism][p_miss] = ampute(X, ampute_mechanism, p_miss)
+            datasets[ampute_mechanism][p_miss] = ampute(
+                X, ampute_mechanism, p_miss, column_limit=column_limit
+            )
 
     return datasets
 
