@@ -653,6 +653,9 @@ class IterativeErrorCorrection:
 
         return X
 
+    def models(self) -> dict:
+        return self.column_to_model
+
     def _get_imputation_order(self) -> list:
         if self.imputation_order_strategy == "ascending":
             return self.imputation_order
@@ -772,6 +775,9 @@ class HyperImputePlugin(base.ImputerPlugin):
 
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
         return self.model.fit_transform(X)
+
+    def models(self) -> dict:
+        return self.model.models()
 
 
 plugin = HyperImputePlugin
