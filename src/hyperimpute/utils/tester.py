@@ -50,14 +50,17 @@ class Eval:
         return score_val
 
     def roc_auc_score(self, y_test: np.ndarray, y_pred_proba: np.ndarray) -> float:
-        assert self.m_metric == "aucroc"
+        if self.m_metric != "aucroc":
+            raise RuntimeError("Invalid metric for the evaluator. expected AUCROC")
 
         return evaluate_auc(y_test, y_pred_proba, self.m_metric)
 
     def average_precision_score(
         self, y_test: np.ndarray, y_pred_proba: np.ndarray
     ) -> float:
-        assert self.m_metric == "aucprc"
+        if self.m_metric != "aucprc":
+            raise RuntimeError("Invalid metric for the evaluator. expected AUCPRC")
+
         return evaluate_auc(y_test, y_pred_proba, self.m_metric)
 
 
