@@ -3,7 +3,7 @@ import copy
 import json
 import math
 import random
-from typing import Any, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 # third party
 import numpy as np
@@ -18,7 +18,7 @@ import hyperimpute.logger as log
 import hyperimpute.plugins.core.params as params
 from hyperimpute.plugins.imputers import Imputers
 import hyperimpute.plugins.imputers.base as base
-from hyperimpute.plugins.prediction import Predictions
+from hyperimpute.plugins.prediction import PredictionPlugin, Predictions
 from hyperimpute.utils.distributions import enable_reproducible_results
 from hyperimpute.utils.optimizer import EarlyStoppingExceeded, create_study
 from hyperimpute.utils.tester import evaluate_estimator, evaluate_regression
@@ -162,7 +162,9 @@ class HyperbandOptimizer:
 
         return score
 
-    def evaluate(self, X: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:
+    def evaluate(
+        self, X: pd.DataFrame, y: pd.DataFrame
+    ) -> Tuple[PredictionPlugin, float]:
         self._baseline(X, y)
 
         for s in reversed(range(self.s_max + 1)):
@@ -216,8 +218,11 @@ class HyperbandOptimizer:
             self.model_best_score, key=self.model_best_score.get, reverse=True  # type: ignore
         )[:2]
 
-        return Predictions(category=self.category).get(
-            self.candidate["name"], **self.candidate["params"]
+        return (
+            Predictions(category=self.category).get(
+                self.candidate["name"], **self.candidate["params"]
+            ),
+            self.candidate["score"],
         )
 
 
@@ -317,7 +322,9 @@ class BayesianOptimizer:
 
         return study.best_value, study.best_trial.params
 
-    def evaluate(self, X_train: pd.DataFrame, y_train: pd.DataFrame) -> Any:
+    def evaluate(
+        self, X_train: pd.DataFrame, y_train: pd.DataFrame
+    ) -> Tuple[PredictionPlugin, float]:
         best_score = self.failure_score
 
         if self.category == "classifier":
@@ -339,8 +346,11 @@ class BayesianOptimizer:
         log.info(
             f"     >>> Column {self.name} <-- score {self.best_score} <-- Model {self.best_candidate}({self.best_params})"
         )
-        return Predictions(category=self.category).get(
-            self.best_candidate, **self.best_params
+        return (
+            Predictions(category=self.category).get(
+                self.best_candidate, **self.best_params
+            ),
+            self.best_score,
         )
 
 
@@ -405,15 +415,20 @@ class SimpleOptimizer:
 
         return score
 
-    def evaluate(self, X: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:
+    def evaluate(
+        self, X: pd.DataFrame, y: pd.DataFrame
+    ) -> Tuple[PredictionPlugin, float]:
         for seed in self.seeds:
             self._eval_params(seed, X, y)
 
         log.info(
             f"     >>> Column {self.name} <-- score {self.candidate['score']} <-- Model {self.candidate['name']}"
         )
-        return Predictions(category=self.category).get(
-            self.candidate["name"], **self.candidate["params"]
+        return (
+            Predictions(category=self.category).get(
+                self.candidate["name"], **self.candidate["params"]
+            ),
+            self.candidate["score"],
         )
 
 
@@ -463,6 +478,7 @@ class IterativeErrorCorrection:
             self.optimizer = SimpleOptimizer
 
         self.avail_data_thresh = 500
+        self.perf_trace: Dict[str, list] = {}
 
     def _select_seeds(self, miss_cnt: int) -> dict:
         clf = self.classifier_seed
@@ -605,9 +621,9 @@ class IterativeErrorCorrection:
         if col in self.categorical_cols:
             y_train = y_train.astype(int)
 
-        candidate = self.column_to_optimizer[col].evaluate(X_train, y_train)
-
+        candidate, score = self.column_to_optimizer[col].evaluate(X_train, y_train)
         self.column_to_model[col] = candidate
+        self.perf_trace.setdefault(col, []).append(score)
 
         return self.column_to_model
 
@@ -736,7 +752,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         imputation_order: int = 0,  # imputation_order_vals
         baseline_imputer: int = 0,  # initial_strategy_vals
         optimizer: str = "simple",
-        class_threshold: int = 5,
+        class_threshold: int = 20,
         optimize_thresh: int = 1000,
         n_inner_iter: int = 50,
         n_outer_iter: int = 5,
@@ -778,6 +794,9 @@ class HyperImputePlugin(base.ImputerPlugin):
 
     def models(self) -> dict:
         return self.model.models()
+
+    def perf_trace(self) -> dict:
+        return self.model.perf_trace
 
 
 plugin = HyperImputePlugin
