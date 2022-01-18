@@ -3,7 +3,7 @@ import copy
 import json
 import math
 import random
-from typing import Any, Callable, Dict, List, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 # third party
 import numpy as np
@@ -38,12 +38,12 @@ SMALL_DATA_REG_SEEDS = [
 LARGE_DATA_CLF_SEEDS = SMALL_DATA_CLF_SEEDS + [
     "xgboost",
     "catboost",
-    "neural_nets",
+    # "neural_nets",
 ]
 LARGE_DATA_REG_SEEDS = SMALL_DATA_REG_SEEDS + [
     "xgboost_regressor",
     "catboost_regressor",
-    "neural_nets_regression",
+    # "neural_nets_regression",
 ]
 
 
@@ -448,8 +448,10 @@ class IterativeErrorCorrection:
         n_inner_iter: int = 50,
         n_min_inner_iter: int = 10,
         n_outer_iter: int = 5,
-        train_step: int = 20,
-        outer_loop_hook: Callable = (lambda out_it, imputation: None),
+        train_step: int = 10,
+        constant_model_selection: bool = False,
+        inner_loop_hook: Optional[Callable] = None,
+        outer_iteration_enabled: bool = False,
     ):
         if optimizer not in [
             "hyperband",
@@ -457,6 +459,10 @@ class IterativeErrorCorrection:
             "simple",
         ]:
             raise RuntimeError(f"Invalid optimizer {optimizer}")
+
+        self.constant_model_selection = constant_model_selection
+        if constant_model_selection:
+            class_threshold = 0
 
         self.study = study
         self.class_threshold = class_threshold
@@ -470,7 +476,8 @@ class IterativeErrorCorrection:
         self.regression_seed = regression_seed
         self.imputation_order_strategy = imputation_order_strategy
         self.train_step = train_step
-        self.outer_loop_hook = outer_loop_hook
+        self.inner_loop_hook = inner_loop_hook
+        self.outer_iteration_enabled = outer_iteration_enabled
 
         self.optimizer: Any
         if optimizer == "hyperband":
@@ -583,6 +590,9 @@ class IterativeErrorCorrection:
     def _check_similar(self, X: pd.DataFrame, col: str) -> Any:
         similar_cols = []
         for ref_col in self.column_to_model:
+            if self.constant_model_selection:
+                return copy.deepcopy(self.column_to_model[ref_col])
+
             if not self._is_same_type(ref_col, col):
                 continue
 
@@ -686,14 +696,6 @@ class IterativeErrorCorrection:
             random.shuffle(self.imputation_order)
             return self.imputation_order
 
-    def _iterate_imputation(self, X: pd.DataFrame, train: bool) -> pd.DataFrame:
-        # Run an iteration of imputation on all columns
-        cols = self._get_imputation_order()
-
-        for col in cols:
-            X = self._impute_single_column(X, col, train)
-        return X
-
     def _initial_imputation(self, X: pd.DataFrame) -> pd.DataFrame:
         # Use baseline imputer for initial values
         return self.baseline_imputer.fit_transform(X)
@@ -710,7 +712,85 @@ class IterativeErrorCorrection:
             index=X.index,
         )
 
-    def fit_transform(self, X: pd.DataFrame) -> "IterativeErrorCorrection":
+    def _fit_transform_outer_optimization(self, X: pd.DataFrame) -> pd.DataFrame:
+        prev_obj_score = -10e10
+
+        log.info("  > HyperImpute using outer optimization")
+
+        for out_it in range(self.n_outer_iter):
+            log.info(f"  > BO iter {out_it}")
+
+            obj_score = self._optimize(X.copy())
+            if np.abs(obj_score - prev_obj_score) < OUTER_TOL:
+                log.info("     >>>> Early stopping on objective diff iteration")
+                break
+
+            prev_obj_score = obj_score
+            next_train = 0
+
+            for it in range(self.n_inner_iter):
+                if self.inner_loop_hook:
+                    self.inner_loop_hook(
+                        out_it * self.n_inner_iter + it, self._tear_down(X.copy())
+                    )
+
+                X_prev = X.copy()
+
+                train = it >= next_train
+                if train:
+                    next_train += self.train_step
+
+                cols = self._get_imputation_order()
+                for col in cols:
+                    X = self._impute_single_column(X.copy(), col, train)
+
+                inf_norm = np.linalg.norm(X - X_prev, ord=np.inf, axis=None)
+                if inf_norm < INNER_TOL and it > self.n_min_inner_iter:
+                    log.info(
+                        f"     >>>> Early stopping on imputation diff iteration : {it} err: {mean_squared_error(X_prev, X)}"
+                    )
+                    break
+
+        return X
+
+    def _fit_transform_inner_optimization(self, X: pd.DataFrame) -> pd.DataFrame:
+        log.info("  > HyperImpute using inner optimization")
+        prev_obj_score = -10e10
+        patience = 0
+
+        for it in range(self.n_inner_iter):
+            obj_score: float = 0
+            self.column_to_model = {}
+
+            if self.inner_loop_hook:
+                self.inner_loop_hook(it, self._tear_down(X.copy()))
+
+            X_prev = X.copy()
+
+            cols = self._get_imputation_order()
+            for col in cols:
+                obj_score += self._optimize_model_for_column(X, col)
+                X = self._impute_single_column(X.copy(), col, True)
+
+            inf_norm = np.linalg.norm(X - X_prev, ord=np.inf, axis=None)
+            if inf_norm < INNER_TOL and it > self.n_min_inner_iter:
+                log.info(
+                    f"     >>>> Early stopping on imputation diff iteration : {it} err: {mean_squared_error(X_prev, X)}"
+                )
+                break
+
+            if np.abs(obj_score - prev_obj_score) < OUTER_TOL:
+                patience += 1
+
+            if patience > 10:
+                log.info("     >>>> Early stopping on objective diff iteration")
+                break
+
+            prev_obj_score = obj_score
+
+        return X
+
+    def fit_transform(self, X: pd.DataFrame) -> pd.DataFrame:
         # Run imputation
         X = self._setup(X)
 
@@ -718,34 +798,11 @@ class IterativeErrorCorrection:
         Xt_init.columns = X.columns
 
         Xt = Xt_init.copy()
-        prev_obj_score = -10e10
 
-        for out_it in range(self.n_outer_iter):
-            log.info(f"  > BO iter {out_it}")
-            self.outer_loop_hook(out_it, self._tear_down(Xt.copy()))
-
-            obj_score = self._optimize(Xt.copy())
-            if np.abs(obj_score - prev_obj_score) < OUTER_TOL:
-                log.info("     >>>> Early stopping on objective diff iteration")
-                break
-            prev_obj_score = obj_score
-
-            next_train = 0
-            for it in range(self.n_inner_iter):
-                Xt_prev = Xt.copy()
-
-                train = False
-                if it >= next_train:
-                    train = True
-                    next_train += self.train_step
-                Xt = self._iterate_imputation(Xt_prev.copy(), train=train)
-
-                inf_norm = np.linalg.norm(Xt - Xt_prev, ord=np.inf, axis=None)
-                if inf_norm < INNER_TOL and it > self.n_min_inner_iter:
-                    log.info(
-                        f"     >>>> Early stopping on imputation diff iteration : {it} err: {mean_squared_error(Xt_prev, Xt)}"
-                    )
-                    break
+        if self.outer_iteration_enabled:
+            Xt = self._fit_transform_outer_optimization(Xt)
+        else:
+            Xt = self._fit_transform_inner_optimization(Xt)
 
         return self._tear_down(Xt)
 
@@ -769,7 +826,9 @@ class HyperImputePlugin(base.ImputerPlugin):
         n_outer_iter: int = 5,
         train_step: int = 20,
         random_state: int = 0,
-        outer_loop_hook: Callable = (lambda out_it, imputation: None),
+        constant_model_selection: bool = False,
+        inner_loop_hook: Optional[Callable] = None,
+        outer_iteration_enabled: bool = False,
     ) -> None:
         super().__init__()
 
@@ -788,7 +847,9 @@ class HyperImputePlugin(base.ImputerPlugin):
             n_inner_iter=n_inner_iter,
             n_outer_iter=n_outer_iter,
             train_step=train_step,
-            outer_loop_hook=outer_loop_hook,
+            inner_loop_hook=inner_loop_hook,
+            constant_model_selection=constant_model_selection,
+            outer_iteration_enabled=outer_iteration_enabled,
         )
 
     @staticmethod
