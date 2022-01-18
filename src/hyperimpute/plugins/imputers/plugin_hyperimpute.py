@@ -3,7 +3,7 @@ import copy
 import json
 import math
 import random
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Callable, Dict, List, Set, Tuple
 
 # third party
 import numpy as np
@@ -23,7 +23,8 @@ from hyperimpute.utils.distributions import enable_reproducible_results
 from hyperimpute.utils.optimizer import EarlyStoppingExceeded, create_study
 from hyperimpute.utils.tester import evaluate_estimator, evaluate_regression
 
-TOL = 1e-8
+INNER_TOL = 1e-8
+OUTER_TOL = 1e-3
 
 SMALL_DATA_CLF_SEEDS = [
     "random_forest",
@@ -448,6 +449,7 @@ class IterativeErrorCorrection:
         n_min_inner_iter: int = 10,
         n_outer_iter: int = 5,
         train_step: int = 20,
+        outer_loop_hook: Callable = (lambda out_it, imputation: None),
     ):
         if optimizer not in [
             "hyperband",
@@ -468,6 +470,7 @@ class IterativeErrorCorrection:
         self.regression_seed = regression_seed
         self.imputation_order_strategy = imputation_order_strategy
         self.train_step = train_step
+        self.outer_loop_hook = outer_loop_hook
 
         self.optimizer: Any
         if optimizer == "hyperband":
@@ -592,15 +595,15 @@ class IterativeErrorCorrection:
 
         return None
 
-    def _optimize_model_for_column(self, X: pd.DataFrame, col: str) -> dict:
+    def _optimize_model_for_column(self, X: pd.DataFrame, col: str) -> float:
         # BO evaluation for a single column
         if self.mask[col].sum() == 0:
-            return self.column_to_model
+            return 0
 
         similar_candidate = self._check_similar(X, col)
         if similar_candidate is not None:
             self.column_to_model[col] = similar_candidate
-            return self.column_to_model
+            return 0
 
         cov_cols = self._get_neighbors_for_col(col)
         covs = X[cov_cols]
@@ -625,15 +628,17 @@ class IterativeErrorCorrection:
         self.column_to_model[col] = candidate
         self.perf_trace.setdefault(col, []).append(score)
 
-        return self.column_to_model
+        return score
 
-    def _optimize(self, X: pd.DataFrame) -> dict:
+    def _optimize(self, X: pd.DataFrame) -> float:
         # BO evaluation to select the best models for each columns
         self.column_to_model = {}
-        for col in self.imputation_order:
-            self._optimize_model_for_column(X, col)
 
-        return self.column_to_model
+        iteration_score: float = 0
+        for col in self.imputation_order:
+            iteration_score += self._optimize_model_for_column(X, col)
+
+        return iteration_score
 
     def _impute_single_column(
         self, X: pd.DataFrame, col: str, train: bool
@@ -713,11 +718,17 @@ class IterativeErrorCorrection:
         Xt_init.columns = X.columns
 
         Xt = Xt_init.copy()
+        prev_obj_score = -10e10
 
         for out_it in range(self.n_outer_iter):
             log.info(f"  > BO iter {out_it}")
+            self.outer_loop_hook(out_it, self._tear_down(Xt.copy()))
 
-            self._optimize(Xt.copy())
+            obj_score = self._optimize(Xt.copy())
+            if np.abs(obj_score - prev_obj_score) < OUTER_TOL:
+                log.info("     >>>> Early stopping on objective diff iteration")
+                break
+            prev_obj_score = obj_score
 
             next_train = 0
             for it in range(self.n_inner_iter):
@@ -730,9 +741,9 @@ class IterativeErrorCorrection:
                 Xt = self._iterate_imputation(Xt_prev.copy(), train=train)
 
                 inf_norm = np.linalg.norm(Xt - Xt_prev, ord=np.inf, axis=None)
-                if inf_norm < TOL and it > self.n_min_inner_iter:
+                if inf_norm < INNER_TOL and it > self.n_min_inner_iter:
                     log.info(
-                        f"     >>>> Early stopping on iteration diff iteration : {it} err: {mean_squared_error(Xt_prev, Xt)}"
+                        f"     >>>> Early stopping on imputation diff iteration : {it} err: {mean_squared_error(Xt_prev, Xt)}"
                     )
                     break
 
@@ -758,6 +769,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         n_outer_iter: int = 5,
         train_step: int = 20,
         random_state: int = 0,
+        outer_loop_hook: Callable = (lambda out_it, imputation: None),
     ) -> None:
         super().__init__()
 
@@ -776,6 +788,7 @@ class HyperImputePlugin(base.ImputerPlugin):
             n_inner_iter=n_inner_iter,
             n_outer_iter=n_outer_iter,
             train_step=train_step,
+            outer_loop_hook=outer_loop_hook,
         )
 
     @staticmethod
