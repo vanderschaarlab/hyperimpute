@@ -20,6 +20,7 @@ from hyperimpute.plugins.prediction import Predictions
 from hyperimpute.plugins.utils.metrics import RMSE
 from hyperimpute.plugins.utils.simulate import simulate_nan
 from hyperimpute.utils.distributions import enable_reproducible_results
+from hyperimpute.utils.metrics import generate_score, print_score
 
 warnings.filterwarnings("ignore")
 enable_reproducible_results()
@@ -133,7 +134,7 @@ def benchmark_model(
 ) -> tuple:
     imputed = model.fit_transform(X_miss.copy())
 
-    downstream_score = benchmark_using_downstream_model(X, imputed, y)
+    downstream_score = 0
     distribution_score = ws_score(imputed, X)
     rmse_score = RMSE(np.asarray(imputed), np.asarray(X), np.asarray(mask))
 
@@ -183,16 +184,12 @@ def evaluate_dataset(
             try:
                 x, x_miss, mask = imputation_scenarios[scenario][missingness]
 
-                (
-                    our_rmse_score,
-                    our_distribution_score,
-                    our_downstream_score,
-                ) = benchmark_model(
+                (our_rmse_score, our_distribution_score, _,) = benchmark_model(
                     name, copy.deepcopy(evaluated_model), x, y, x_miss, mask
                 )
                 rmse_results[scenario][missingness]["our"] = our_rmse_score
                 distr_results[scenario][missingness]["our"] = our_distribution_score
-                downstream_results[scenario][missingness]["our"] = our_downstream_score
+                # downstream_results[scenario][missingness]["our"] = our_downstream_score
 
                 for method in ref_methods:
                     x, x_miss, mask = imputation_scenarios[scenario][missingness]
@@ -204,11 +201,11 @@ def evaluate_dataset(
                     ) = benchmark_standard(method, x, y, x_miss, mask)
                     rmse_results[scenario][missingness][method] = mse_score
                     distr_results[scenario][missingness][method] = distribution_score
-                    downstream_results[scenario][missingness][method] = downstream_score
+                    # downstream_results[scenario][missingness][method] = downstream_score
             except BaseException as e:
                 print("scenario failed", str(e))
                 continue
-    return rmse_results, distr_results, downstream_results
+    return rmse_results, distr_results
 
 
 def evaluate_dataset_repeated_internal(
@@ -238,16 +235,11 @@ def evaluate_dataset_repeated_internal(
 
     rmse_results_dict: dict = {}
     distr_results_dict: dict = {}
-    downstream_results_dict: dict = {}
 
     for it in range(n_iter):
         if debug:
             print("> evaluation trial ", it)
-        (
-            local_rmse_results,
-            local_distr_results,
-            local_downstream_results,
-        ) = evaluate_dataset(
+        (local_rmse_results, local_distr_results,) = evaluate_dataset(
             name=name,
             evaluated_model=evaluated_model,
             X_raw=X_raw,
@@ -274,60 +266,59 @@ def evaluate_dataset_repeated_internal(
                         method,
                         local_distr_results[scenario][missingness][method],
                     )
-                    add_metrics(
-                        downstream_results_dict,
-                        scenario,
-                        missingness,
-                        method,
-                        local_downstream_results[scenario][missingness][method],
-                    )
 
     rmse_results = []
     distr_results = []
-    downstream_results = []
+
+    rmse_str_results = []
+    distr_str_results = []
 
     for scenario in rmse_results_dict:
 
         for missingness in rmse_results_dict[scenario]:
 
+            local_rmse_str_results = [scenario, missingness]
+            local_distr_str_results = [scenario, missingness]
+
             local_rmse_results = [scenario, missingness]
             local_distr_results = [scenario, missingness]
-            local_downstream_results = [scenario, missingness]
 
             for method in ["our"] + ref_methods:
-                local_rmse_results.append(
-                    np.mean(rmse_results_dict[scenario][missingness][method])
+                rmse_mean, rmse_std = generate_score(
+                    rmse_results_dict[scenario][missingness][method]
                 )
-                local_distr_results.append(
-                    np.mean(distr_results_dict[scenario][missingness][method])
+                rmse_str = print_score((rmse_mean, rmse_std))
+                distr_mean, distr_std = generate_score(
+                    distr_results_dict[scenario][missingness][method]
                 )
-                local_downstream_results.append(
-                    np.mean(downstream_results_dict[scenario][missingness][method])
-                )
+                distr_str = print_score((distr_mean, distr_std))
 
+                local_rmse_str_results.append(rmse_str)
+                local_rmse_results.append((rmse_mean, rmse_std))
+
+                local_distr_str_results.append(distr_str)
+                local_distr_results.append((distr_mean, distr_std))
+
+            rmse_str_results.append(local_rmse_str_results)
             rmse_results.append(local_rmse_results)
+            distr_str_results.append(local_distr_str_results)
             distr_results.append(local_distr_results)
-            downstream_results.append(local_downstream_results)
 
     print("benchmark took ", time() - start)
     headers = ["Scenario", "miss_pct [0, 1]"] + ["Our method"] + ref_methods
 
     sep = "\n==========================================================\n\n"
     print("RMSE score")
-    display(HTML(tabulate.tabulate(rmse_results, headers=headers, tablefmt="html")))
+    display(HTML(tabulate.tabulate(rmse_str_results, headers=headers, tablefmt="html")))
 
     print(sep + "Wasserstein score")
 
-    display(HTML(tabulate.tabulate(distr_results, headers=headers, tablefmt="html")))
-
-    print(sep + "Downstream model prediction error")
     display(
-        HTML(tabulate.tabulate(downstream_results, headers=headers, tablefmt="html"))
+        HTML(tabulate.tabulate(distr_str_results, headers=headers, tablefmt="html"))
     )
 
     return {
         "headers": headers,
         "rmse": rmse_results,
         "wasserstein": distr_results,
-        "downstream": downstream_results,
     }
