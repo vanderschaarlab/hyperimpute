@@ -38,12 +38,12 @@ SMALL_DATA_REG_SEEDS = [
 LARGE_DATA_CLF_SEEDS = SMALL_DATA_CLF_SEEDS + [
     "xgboost",
     "catboost",
-    # "neural_nets",
+    "neural_nets",
 ]
 LARGE_DATA_REG_SEEDS = SMALL_DATA_REG_SEEDS + [
     "xgboost_regressor",
     "catboost_regressor",
-    # "neural_nets_regression",
+    "neural_nets_regression",
 ]
 
 
@@ -444,12 +444,15 @@ class IterativeErrorCorrection:
         class_threshold: int = 20,
         optimize_thresh: int = 1000,
         optimize_thresh_upper: int = 3000,
-        imputation_order_strategy: str = "random",
+        imputation_order_strategy: str = "ascending",
         n_inner_iter: int = 50,
         n_min_inner_iter: int = 10,
         n_outer_iter: int = 5,
         train_step: int = 10,
-        constant_model_selection: bool = False,
+        select_model_by_column: bool = True,
+        select_model_by_iteration: bool = True,
+        select_patience: int = 3,
+        select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
         outer_iteration_enabled: bool = False,
     ):
@@ -460,10 +463,17 @@ class IterativeErrorCorrection:
         ]:
             raise RuntimeError(f"Invalid optimizer {optimizer}")
 
-        self.constant_model_selection = constant_model_selection
-        if constant_model_selection:
+        self.select_model_by_column = select_model_by_column
+        self.select_model_by_iteration = select_model_by_iteration
+        self.select_patience = select_patience
+        self.select_lazy = select_lazy
+
+        if not select_model_by_column:
             class_threshold = 0
 
+        log.info(
+            f"Iteration imputation: select_model_by_column: {select_model_by_column}, select_model_by_iteration: {select_model_by_iteration}"
+        )
         self.study = study
         self.class_threshold = class_threshold
         self.baseline_imputer = Imputers().get(baseline_imputer)
@@ -588,9 +598,12 @@ class IterativeErrorCorrection:
         return ltype == rtype
 
     def _check_similar(self, X: pd.DataFrame, col: str) -> Any:
+        if not self.select_lazy:
+            return None
+
         similar_cols = []
         for ref_col in self.column_to_model:
-            if self.constant_model_selection:
+            if not self.select_model_by_column:
                 return copy.deepcopy(self.column_to_model[ref_col])
 
             if not self._is_same_type(ref_col, col):
@@ -642,7 +655,8 @@ class IterativeErrorCorrection:
 
     def _optimize(self, X: pd.DataFrame) -> float:
         # BO evaluation to select the best models for each columns
-        self.column_to_model = {}
+        if self.select_model_by_iteration:
+            self.column_to_model = {}
 
         iteration_score: float = 0
         for col in self.imputation_order:
@@ -759,8 +773,11 @@ class IterativeErrorCorrection:
         patience = 0
 
         for it in range(self.n_inner_iter):
+            log.info(f"  > Imputation iter {it}")
+            if self.select_model_by_iteration:
+                self.column_to_model = {}
+
             obj_score: float = 0
-            self.column_to_model = {}
 
             if self.inner_loop_hook:
                 self.inner_loop_hook(it, self._tear_down(X.copy()))
@@ -781,8 +798,10 @@ class IterativeErrorCorrection:
 
             if np.abs(obj_score - prev_obj_score) < OUTER_TOL:
                 patience += 1
+            else:
+                patience = 0
 
-            if patience > 10:
+            if patience > self.select_patience:
                 log.info("     >>>> Early stopping on objective diff iteration")
                 break
 
@@ -811,7 +830,7 @@ class HyperImputePlugin(base.ImputerPlugin):
     """HyperImpute strategy."""
 
     initial_strategy_vals = ["mean", "median", "most_frequent"]
-    imputation_order_vals = ["random", "ascending", "descending"]
+    imputation_order_vals = ["ascending", "descending", "random"]
 
     def __init__(
         self,
@@ -826,7 +845,10 @@ class HyperImputePlugin(base.ImputerPlugin):
         n_outer_iter: int = 5,
         train_step: int = 20,
         random_state: int = 0,
-        constant_model_selection: bool = False,
+        select_model_by_column: bool = True,
+        select_model_by_iteration: bool = True,
+        select_patience: int = 3,
+        select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
         outer_iteration_enabled: bool = False,
     ) -> None:
@@ -847,8 +869,11 @@ class HyperImputePlugin(base.ImputerPlugin):
             n_inner_iter=n_inner_iter,
             n_outer_iter=n_outer_iter,
             train_step=train_step,
+            select_model_by_column=select_model_by_column,
+            select_model_by_iteration=select_model_by_iteration,
+            select_patience=select_patience,
+            select_lazy=select_lazy,
             inner_loop_hook=inner_loop_hook,
-            constant_model_selection=constant_model_selection,
             outer_iteration_enabled=outer_iteration_enabled,
         )
 
