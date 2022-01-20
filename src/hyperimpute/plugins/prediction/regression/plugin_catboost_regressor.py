@@ -25,13 +25,18 @@ class CatBoostRegressorPlugin(base.RegressionPlugin):
         >>> plugin.fit_predict(X, y) # returns the probabilities for each class
     """
 
-    grow_policies = ["Depthwise", "SymmetricTree", "Lossguide"]
+    grow_policies: List[Optional[str]] = [
+        None,
+        "Depthwise",
+        "SymmetricTree",
+        "Lossguide",
+    ]
 
     def __init__(
         self,
-        depth: int = 5,
+        depth: Optional[int] = None,
         grow_policy: int = 0,
-        n_estimators: int = 100,
+        n_estimators: Optional[int] = 10,
         model: Any = None,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
@@ -68,7 +73,8 @@ class CatBoostRegressorPlugin(base.RegressionPlugin):
     @staticmethod
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
         return [
-            params.Integer("depth", 4, 7),
+            params.Integer("depth", 1, 5),
+            params.Integer("n_estimators", 10, 100),
             params.Integer(
                 "grow_policy", 0, len(CatBoostRegressorPlugin.grow_policies) - 1
             ),

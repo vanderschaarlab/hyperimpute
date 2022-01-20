@@ -59,18 +59,13 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
     def __init__(
         self,
         n_estimators: int = 100,
-        max_depth: int = 5,
-        lr: float = 0.01,
+        max_depth: Optional[int] = 6,
+        lr: Optional[float] = None,
         random_state: int = 0,
-        model: Any = None,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
-        if model is not None:
-            self.model = model
-            return
-
         if hyperparam_search_iterations:
             n_estimators = int(hyperparam_search_iterations)
 
@@ -86,7 +81,7 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
             random_state=random_state,
             n_estimators=n_estimators,
             max_depth=max_depth,
-            nthread=-1,
+            nthread=2,
             lr=lr,
             **gpu_args,
             **kwargs,
@@ -100,7 +95,7 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
         return [
             params.Integer("max_depth", 2, 9),
-            params.Categorical("lr", [0.01, 0.1]),
+            params.Categorical("lr", [1e-4, 1e-3, 1e-2]),
         ]
 
     def _fit(
