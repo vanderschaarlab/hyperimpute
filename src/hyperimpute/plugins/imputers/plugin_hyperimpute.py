@@ -27,20 +27,20 @@ INNER_TOL = 1e-8
 OUTER_TOL = 1e-3
 
 SMALL_DATA_CLF_SEEDS = [
-    "random_forest",
     "logistic_regression",
 ]
 SMALL_DATA_REG_SEEDS = [
-    "random_forest_regressor",
     "linear_regression",
 ]
 
 LARGE_DATA_CLF_SEEDS = SMALL_DATA_CLF_SEEDS + [
+    "random_forest",
     "xgboost",
     "catboost",
     "neural_nets",
 ]
 LARGE_DATA_REG_SEEDS = SMALL_DATA_REG_SEEDS + [
+    "random_forest_regressor",
     "xgboost_regressor",
     "catboost_regressor",
     "neural_nets_regression",
@@ -65,7 +65,7 @@ class HyperbandOptimizer:
         category: str,
         classifier_seed: list,
         regression_seed: list,
-        max_iter: int = 27,  # maximum iterations per configuration
+        max_iter: int = 81,  # maximum iterations per configuration
         eta: int = 3,  # defines configuration downsampling rate (default = 3)
     ) -> None:
         self.name = name
@@ -143,7 +143,7 @@ class HyperbandOptimizer:
             try:
                 if self.category == "regression":
                     out = evaluate_regression(model, X, y, n_folds=n_folds)
-                    score = -out["clf"]["rmse"][0]
+                    score = -(out["clf"]["rmse"][0] + out["clf"]["wnd"][0])
                 else:
                     out = evaluate_estimator(model, X, y, n_folds=n_folds)
                     score = out["clf"]["aucroc"][0]
@@ -208,8 +208,6 @@ class HyperbandOptimizer:
                 T = T[-saved:]
                 scores = [scores[i] for i in indices]
                 scores = scores[-saved:]
-
-        self.candidate["params"]["hyperparam_search_iterations"] = 100
 
         log.info(
             f"      >>> {self.name} -- best candidate {self.candidate['name']}: ({self.candidate['params']}) --- score : {self.candidate['score']}"
@@ -836,10 +834,10 @@ class HyperImputePlugin(base.ImputerPlugin):
         self,
         classifier_seed: list = LARGE_DATA_CLF_SEEDS,
         regression_seed: list = LARGE_DATA_REG_SEEDS,
-        imputation_order: int = 0,  # imputation_order_vals
+        imputation_order: int = 2,  # imputation_order_vals
         baseline_imputer: int = 0,  # initial_strategy_vals
         optimizer: str = "simple",
-        class_threshold: int = 20,
+        class_threshold: int = 5,
         optimize_thresh: int = 1000,
         n_inner_iter: int = 50,
         n_outer_iter: int = 5,

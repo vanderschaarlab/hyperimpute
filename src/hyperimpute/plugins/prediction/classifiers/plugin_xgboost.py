@@ -35,7 +35,7 @@ class XGBoostPlugin(base.ClassifierPlugin):
              Subsample ratio of columns for each level.
         subsample: float
             Subsample ratio of the training instance.
-        learning_rate: float
+        lr: float
             Boosting learning rate
         booster: str
             Specify which booster to use: gbtree, gblinear or dart.
@@ -60,28 +60,23 @@ class XGBoostPlugin(base.ClassifierPlugin):
     def __init__(
         self,
         n_estimators: int = 100,
-        reg_lambda: float = 1e-3,
-        reg_alpha: float = 1e-3,
-        colsample_bytree: float = 0.1,
-        colsample_bynode: float = 0.1,
-        colsample_bylevel: float = 0.1,
-        max_depth: int = 6,
-        subsample: float = 0.1,
-        learning_rate: float = 1e-2,
-        min_child_weight: int = 0,
+        reg_lambda: Optional[float] = None,
+        reg_alpha: Optional[float] = None,
+        colsample_bytree: Optional[float] = None,
+        colsample_bynode: Optional[float] = None,
+        colsample_bylevel: Optional[float] = None,
+        max_depth: Optional[int] = 6,
+        subsample: Optional[float] = None,
+        lr: Optional[float] = None,
+        min_child_weight: Optional[int] = None,
         max_bin: int = 256,
         booster: int = 0,
         random_state: int = 0,
-        model: Any = None,
         nthread: int = max(1, int(multiprocessing.cpu_count() / 2)),
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
-        if model is not None:
-            self.model = model
-            return
-
         if hyperparam_search_iterations:
             n_estimators = int(hyperparam_search_iterations)
 
@@ -102,7 +97,7 @@ class XGBoostPlugin(base.ClassifierPlugin):
             colsample_bylevel=colsample_bylevel,
             max_depth=max_depth,
             subsample=subsample,
-            learning_rate=learning_rate,
+            lr=lr,
             min_child_weight=min_child_weight,
             max_bin=max_bin,
             verbosity=0,
@@ -127,7 +122,7 @@ class XGBoostPlugin(base.ClassifierPlugin):
             params.Float("colsample_bynode", 0.1, 0.9),
             params.Float("colsample_bylevel", 0.1, 0.9),
             params.Float("subsample", 0.1, 0.9),
-            params.Float("learning_rate", 1e-4, 1e-2),
+            params.Categorical("lr", [1e-4, 1e-3, 1e-2]),
             params.Integer("max_depth", 2, 9),
             params.Integer("min_child_weight", 0, 300),
             params.Integer("max_bin", 256, 512),

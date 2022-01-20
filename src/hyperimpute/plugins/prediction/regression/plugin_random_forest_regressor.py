@@ -44,21 +44,17 @@ class RandomForestRegressionPlugin(base.RegressionPlugin):
 
     def __init__(
         self,
-        n_estimators: int = 10,
+        n_estimators: int = 100,
         criterion: int = 0,
         max_features: int = 0,
         min_samples_split: int = 2,
         bootstrap: bool = True,
         min_samples_leaf: int = 1,
-        max_depth: int = 3,
-        model: Any = None,
+        max_depth: Optional[int] = None,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
-        if model is not None:
-            self.model = model
-            return
 
         if hyperparam_search_iterations:
             n_estimators = int(hyperparam_search_iterations)
@@ -89,6 +85,7 @@ class RandomForestRegressionPlugin(base.RegressionPlugin):
             ),
             params.Categorical("min_samples_split", [2, 5, 10]),
             params.Categorical("min_samples_leaf", [2, 5, 10]),
+            params.Integer("max_depth", 1, 3),
         ]
 
     def _fit(

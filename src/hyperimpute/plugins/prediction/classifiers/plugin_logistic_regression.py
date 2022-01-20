@@ -46,7 +46,7 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
         solver: int = 1,
         multi_class: int = 0,
         class_weight: int = 0,
-        max_iter: int = 10000,
+        max_iter: int = 100,
         penalty: str = "l2",
         model: Any = None,
         hyperparam_search_iterations: Optional[int] = None,
@@ -67,7 +67,7 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
             class_weight=LogisticRegressionPlugin.weights[class_weight],
             penalty=penalty,
             max_iter=max_iter,
-            n_jobs=-1,
+            n_jobs=2,
         )
 
     @staticmethod
@@ -77,6 +77,7 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
     @staticmethod
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
         return [
+            params.Integer("max_iter", 1000, 10000),
             params.Float("C", 1e-3, 1e-2),
             params.Integer("solver", 0, len(LogisticRegressionPlugin.solvers) - 1),
             params.Integer("multi_class", 0, len(LogisticRegressionPlugin.classes) - 1),

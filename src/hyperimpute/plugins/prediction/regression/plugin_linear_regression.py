@@ -1,9 +1,9 @@
 # stdlib
-from typing import Any, List
+from typing import Any, List, Optional
 
 # third party
 import pandas as pd
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Ridge
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
@@ -21,14 +21,24 @@ class LinearRegressionPlugin(base.RegressionPlugin):
         >>> plugin.fit_predict(X, y) # returns the probabilities for each class
     """
 
-    def __init__(self, model: Any = None, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
-        if model is not None:
-            self.model = model
-            return
+    solvers = ["auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga"]
 
-        self.model = LinearRegression(
-            n_jobs=-1,
+    def __init__(
+        self,
+        solver: int = 0,
+        max_iter: Optional[int] = 100,
+        tol: float = 1e-3,
+        hyperparam_search_iterations: Optional[int] = None,
+        **kwargs: Any
+    ) -> None:
+        super().__init__(**kwargs)
+
+        if hyperparam_search_iterations:
+            max_iter = int(hyperparam_search_iterations) * 100
+
+        self.model = Ridge(
+            solver=LinearRegressionPlugin.solvers[solver],
+            max_iter=max_iter,
         )
 
     @staticmethod
@@ -37,7 +47,10 @@ class LinearRegressionPlugin(base.RegressionPlugin):
 
     @staticmethod
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
-        return []
+        return [
+            params.Categorical("max_iter", [100, 10e3, 10e4]),
+            params.Integer("solver", 0, len(LinearRegressionPlugin.solvers) - 1),
+        ]
 
     def _fit(
         self, X: pd.DataFrame, *args: Any, **kwargs: Any

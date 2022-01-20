@@ -10,7 +10,12 @@ from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 
 # hyperimpute absolute
 import hyperimpute.logger as log
-from hyperimpute.utils.metrics import evaluate_auc, generate_score, print_score
+from hyperimpute.utils.metrics import (
+    evaluate_auc,
+    evaluate_wnd,
+    generate_score,
+    print_score,
+)
 
 
 class Eval:
@@ -179,7 +184,6 @@ def evaluate_regression(
     X: pd.DataFrame,
     Y: pd.DataFrame,
     n_folds: int = 3,
-    metric: str = "rmse",
     seed: int = 0,
     *args: Any,
     **kwargs: Any,
@@ -189,7 +193,11 @@ def evaluate_regression(
 
     log.debug(f"evaluate_estimator shape x:{X.shape} y:{Y.shape}")
 
-    metric_ = np.zeros(n_folds)
+    metrics = ["rmse", "wnd"]
+    metrics_ = {}
+
+    for m in metrics:
+        metrics_[m] = np.zeros(n_folds)
 
     indx = 0
 
@@ -198,18 +206,20 @@ def evaluate_regression(
         X_test: pd.DataFrame,
         Y_train: pd.DataFrame,
         Y_test: pd.DataFrame,
-    ) -> float:
+    ) -> Tuple[float, float]:
         model = copy.deepcopy(estimator)
         model.fit(X_train, Y_train)
 
         preds = model.predict(X_test)
 
-        return mean_squared_error(Y_test, preds)
+        return mean_squared_error(Y_test, preds), evaluate_wnd(preds, Y_test)
 
     if n_folds == 1:
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=seed)
 
-        metric_[indx] = eval_iteration(X_train, X_test, Y_train, Y_test)
+        rmse, wnd = eval_iteration(X_train, X_test, Y_train, Y_test)
+        metrics_["rmse"][indx] = rmse
+        metrics_["wnd"][indx] = wnd
     else:
         skf = KFold(n_splits=n_folds, shuffle=True, random_state=seed)
 
@@ -220,17 +230,22 @@ def evaluate_regression(
             X_test = X.loc[X.index[test_index]]
             Y_test = Y.loc[Y.index[test_index]]
 
-            metric_[indx] = eval_iteration(X_train, X_test, Y_train, Y_test)
+            rmse, wnd = eval_iteration(X_train, X_test, Y_train, Y_test)
+            metrics_["rmse"][indx] = rmse
+            metrics_["wnd"][indx] = wnd
 
             indx += 1
 
-    output_clf = generate_score(metric_)
+    output_clf_rmse = generate_score(metrics_["rmse"])
+    output_clf_wnd = generate_score(metrics_["wnd"])
 
     return {
         "clf": {
-            metric: output_clf,
+            "rmse": output_clf_rmse,
+            "wnd": output_clf_wnd,
         },
         "str": {
-            metric: print_score(output_clf),
+            "rmse": print_score(output_clf_rmse),
+            "wnd": print_score(output_clf_wnd),
         },
     }
