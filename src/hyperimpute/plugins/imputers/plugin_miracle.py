@@ -27,7 +27,7 @@ class MiraclePlugin(base.ImputerPlugin):
     def __init__(
         self,
         lr: float = 0.001,
-        batch_size: int = 32,
+        batch_size: int = 1024,
         num_outputs: int = 1,
         n_hidden: int = 32,
         reg_lambda: float = 1,

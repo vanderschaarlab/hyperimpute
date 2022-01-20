@@ -1,4 +1,5 @@
 # stdlib
+import multiprocessing
 from typing import Any, List, Optional
 
 # third party
@@ -86,7 +87,7 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
             random_state=random_state,
             n_estimators=n_estimators,
             max_depth=max_depth,
-            nthread=-1,
+            nthread=max(1, int(multiprocessing.cpu_count() / 2)),
             lr=lr,
             **gpu_args,
             **kwargs,

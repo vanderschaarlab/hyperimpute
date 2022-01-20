@@ -1,4 +1,5 @@
 # stdlib
+import multiprocessing
 from typing import Any, List, Optional
 
 # third party
@@ -72,7 +73,7 @@ class XGBoostPlugin(base.ClassifierPlugin):
         booster: int = 0,
         random_state: int = 0,
         model: Any = None,
-        nthread: int = -1,
+        nthread: int = max(1, int(multiprocessing.cpu_count() / 2)),
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:

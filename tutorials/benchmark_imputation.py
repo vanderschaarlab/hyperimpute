@@ -1,11 +1,12 @@
 # stdlib
 import copy
-from time import time
+from time import sleep, time
 from typing import Any
 import warnings
 
 # third party
 from IPython.display import HTML, display
+from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from scipy.stats import wasserstein_distance
@@ -29,6 +30,7 @@ enable_reproducible_results()
 imputers = Imputers()
 
 # Simulation
+dispatcher = Parallel(n_jobs=4)
 
 
 def ampute(
@@ -132,12 +134,15 @@ def benchmark_model(
     X_miss: np.ndarray,
     mask: np.ndarray,
 ) -> tuple:
+    start = time()
+
     imputed = model.fit_transform(X_miss.copy())
 
     downstream_score = 0
     distribution_score = ws_score(imputed, X)
     rmse_score = RMSE(np.asarray(imputed), np.asarray(X), np.asarray(mask))
 
+    print("benchmark ", model.name(), time() - start)
     return rmse_score, distribution_score, downstream_score
 
 
@@ -236,10 +241,11 @@ def evaluate_dataset_repeated_internal(
     rmse_results_dict: dict = {}
     distr_results_dict: dict = {}
 
-    for it in range(n_iter):
+    def eval_local(it: int) -> Any:
+        sleep(5 * it)
         if debug:
             print("> evaluation trial ", it)
-        (local_rmse_results, local_distr_results,) = evaluate_dataset(
+        return evaluate_dataset(
             name=name,
             evaluated_model=evaluated_model,
             X_raw=X_raw,
@@ -249,6 +255,13 @@ def evaluate_dataset_repeated_internal(
             debug=debug,
             miss_pct=miss_pct,
         )
+
+    repeated_evals_results = dispatcher(delayed(eval_local)(it) for it in range(n_iter))
+
+    for (
+        local_rmse_results,
+        local_distr_results,
+    ) in repeated_evals_results:
         for scenario in local_rmse_results:
             for missingness in local_rmse_results[scenario]:
                 for method in local_rmse_results[scenario][missingness]:

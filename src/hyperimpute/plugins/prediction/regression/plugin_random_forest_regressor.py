@@ -1,4 +1,5 @@
 # stdlib
+import multiprocessing
 from typing import Any, List, Optional
 
 # third party
@@ -70,7 +71,7 @@ class RandomForestRegressionPlugin(base.RegressionPlugin):
             max_depth=max_depth,
             bootstrap=bootstrap,
             min_samples_leaf=min_samples_leaf,
-            n_jobs=-1,
+            n_jobs=max(1, int(multiprocessing.cpu_count() / 2)),
         )
 
     @staticmethod
