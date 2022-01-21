@@ -142,7 +142,7 @@ class SinkhornPlugin(base.ImputerPlugin):
         lr: float = 1e-2,
         opt: Any = torch.optim.Adam,
         niter: int = 500,
-        batchsize: int = 256,
+        batchsize: int = 512,
         n_pairs: int = 1,
         noise: float = 1e-2,
         scaling: float = 0.9,
