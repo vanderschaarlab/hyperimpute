@@ -37,15 +37,10 @@ class CatBoostRegressorPlugin(base.RegressionPlugin):
         depth: Optional[int] = None,
         grow_policy: int = 0,
         n_estimators: Optional[int] = 10,
-        model: Any = None,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
-        if model is not None:
-            self.model = model
-            return
-
         if hyperparam_search_iterations:
             n_estimators = int(hyperparam_search_iterations)
 

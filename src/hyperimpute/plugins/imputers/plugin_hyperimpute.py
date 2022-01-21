@@ -27,20 +27,20 @@ INNER_TOL = 1e-8
 OUTER_TOL = 1e-3
 
 SMALL_DATA_CLF_SEEDS = [
+    "random_forest",
     "logistic_regression",
 ]
 SMALL_DATA_REG_SEEDS = [
+    "random_forest_regressor",
     "linear_regression",
 ]
 
 LARGE_DATA_CLF_SEEDS = SMALL_DATA_CLF_SEEDS + [
-    "random_forest",
     "xgboost",
     "catboost",
     "neural_nets",
 ]
 LARGE_DATA_REG_SEEDS = SMALL_DATA_REG_SEEDS + [
-    "random_forest_regressor",
     "xgboost_regressor",
     "catboost_regressor",
     "neural_nets_regression",
@@ -65,7 +65,7 @@ class HyperbandOptimizer:
         category: str,
         classifier_seed: list,
         regression_seed: list,
-        max_iter: int = 81,  # maximum iterations per configuration
+        max_iter: int = 27,  # maximum iterations per configuration
         eta: int = 3,  # defines configuration downsampling rate (default = 3)
     ) -> None:
         self.name = name
@@ -419,7 +419,6 @@ class SimpleOptimizer:
     ) -> Tuple[PredictionPlugin, float]:
         for seed in self.seeds:
             self._eval_params(seed, X, y)
-
         log.info(
             f"     >>> Column {self.name} <-- score {self.candidate['score']} <-- Model {self.candidate['name']}"
         )
@@ -497,6 +496,7 @@ class IterativeErrorCorrection:
 
         self.avail_data_thresh = 500
         self.perf_trace: Dict[str, list] = {}
+        self.model_trace: Dict[str, list] = {}
 
     def _select_seeds(self, miss_cnt: int) -> dict:
         clf = self.classifier_seed
@@ -648,6 +648,7 @@ class IterativeErrorCorrection:
         candidate, score = self.column_to_optimizer[col].evaluate(X_train, y_train)
         self.column_to_model[col] = candidate
         self.perf_trace.setdefault(col, []).append(score)
+        self.model_trace.setdefault(col, []).append(candidate.name())
 
         return score
 
@@ -845,7 +846,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         random_state: int = 0,
         select_model_by_column: bool = True,
         select_model_by_iteration: bool = True,
-        select_patience: int = 3,
+        select_patience: int = 5,
         select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
         outer_iteration_enabled: bool = False,
@@ -892,8 +893,11 @@ class HyperImputePlugin(base.ImputerPlugin):
     def models(self) -> dict:
         return self.model.models()
 
-    def perf_trace(self) -> dict:
-        return self.model.perf_trace
+    def trace(self) -> dict:
+        return {
+            "objective": self.model.perf_trace,
+            "models": self.model.model_trace,
+        }
 
 
 plugin = HyperImputePlugin

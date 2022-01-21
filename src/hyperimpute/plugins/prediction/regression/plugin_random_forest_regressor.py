@@ -43,13 +43,13 @@ class RandomForestRegressionPlugin(base.RegressionPlugin):
 
     def __init__(
         self,
-        n_estimators: int = 100,
+        n_estimators: int = 10,
         criterion: int = 0,
         max_features: int = 0,
         min_samples_split: int = 2,
         bootstrap: bool = True,
         min_samples_leaf: int = 1,
-        max_depth: Optional[int] = None,
+        max_depth: Optional[int] = 3,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
@@ -66,7 +66,7 @@ class RandomForestRegressionPlugin(base.RegressionPlugin):
             max_depth=max_depth,
             bootstrap=bootstrap,
             min_samples_leaf=min_samples_leaf,
-            n_jobs=2,
+            n_jobs=-1,
         )
 
     @staticmethod

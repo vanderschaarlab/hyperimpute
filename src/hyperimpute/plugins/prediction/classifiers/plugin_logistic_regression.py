@@ -46,7 +46,7 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
         solver: int = 1,
         multi_class: int = 0,
         class_weight: int = 0,
-        max_iter: int = 100,
+        max_iter: int = 10000,
         penalty: str = "l2",
         model: Any = None,
         hyperparam_search_iterations: Optional[int] = None,
@@ -67,7 +67,7 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
             class_weight=LogisticRegressionPlugin.weights[class_weight],
             penalty=penalty,
             max_iter=max_iter,
-            n_jobs=2,
+            n_jobs=-1,
         )
 
     @staticmethod
