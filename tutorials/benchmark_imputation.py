@@ -34,15 +34,25 @@ dispatcher = Parallel(n_jobs=4)
 
 
 def ampute(
-    x: pd.DataFrame, mechanism: str, p_miss: float, column_limit: int = 8
+    x: pd.DataFrame,
+    mechanism: str,
+    p_miss: float,
+    column_limit: int = 8,
+    sample_columns: bool = True,
 ) -> tuple:
     columns = x.columns
     column_limit = min(len(columns), column_limit)
 
-    sampled_columns = columns[
-        np.random.choice(len(columns), size=column_limit, replace=False)
-    ]
-    x_simulated = simulate_nan(x[sampled_columns].values, p_miss, mechanism)
+    if sample_columns:
+        sampled_columns = columns[
+            np.random.choice(len(columns), size=column_limit, replace=False)
+        ]
+    else:
+        sampled_columns = list(range(column_limit))
+
+    x_simulated = simulate_nan(
+        x[sampled_columns].values, p_miss, mechanism, sample_columns=sample_columns
+    )
 
     isolated_mask = pd.DataFrame(x_simulated["mask"], columns=sampled_columns)
     isolated_x_miss = pd.DataFrame(x_simulated["X_incomp"], columns=sampled_columns)
@@ -66,7 +76,9 @@ def scale_data(X: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(preproc.fit_transform(X), columns=cols)
 
 
-def simulate_scenarios(X: pd.DataFrame, column_limit: int = 8) -> pd.DataFrame:
+def simulate_scenarios(
+    X: pd.DataFrame, column_limit: int = 8, sample_columns: bool = True
+) -> pd.DataFrame:
     X = scale_data(X)
 
     datasets: dict = {}
@@ -80,7 +92,11 @@ def simulate_scenarios(X: pd.DataFrame, column_limit: int = 8) -> pd.DataFrame:
                 datasets[ampute_mechanism] = {}
 
             datasets[ampute_mechanism][p_miss] = ampute(
-                X, ampute_mechanism, p_miss, column_limit=column_limit
+                X,
+                ampute_mechanism,
+                p_miss,
+                column_limit=column_limit,
+                sample_columns=sample_columns,
             )
 
     return datasets
@@ -166,8 +182,9 @@ def evaluate_dataset(
     scenarios: list = ["MAR", "MCAR", "MNAR"],
     miss_pct: list = [0.1, 0.3, 0.5],
     debug: bool = False,
+    sample_columns: bool = True,
 ) -> tuple:
-    imputation_scenarios = simulate_scenarios(X_raw)
+    imputation_scenarios = simulate_scenarios(X_raw, sample_columns=sample_columns)
 
     rmse_results: dict = {}
     distr_results: dict = {}
@@ -223,6 +240,7 @@ def evaluate_dataset_repeated_internal(
     miss_pct: list = [0.1, 0.3, 0.5, 0.7],
     n_iter: int = 2,
     debug: bool = False,
+    sample_columns: bool = True,
 ) -> dict:
     start = time()
 
@@ -254,6 +272,7 @@ def evaluate_dataset_repeated_internal(
             scenarios=scenarios,
             debug=debug,
             miss_pct=miss_pct,
+            sample_columns=sample_columns,
         )
 
     repeated_evals_results = dispatcher(delayed(eval_local)(it) for it in range(n_iter))

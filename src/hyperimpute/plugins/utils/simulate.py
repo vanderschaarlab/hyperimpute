@@ -55,7 +55,12 @@ def fit_intercepts(
     return intercepts
 
 
-def MAR_mask(X: np.ndarray, p: float, p_obs: float) -> np.ndarray:
+def MAR_mask(
+    X: np.ndarray,
+    p: float,
+    p_obs: float,
+    sample_columns: bool = True,
+) -> np.ndarray:
     """
     Missing at random mechanism with a logistic masking model. First, a subset of variables with *no* missing values is
     randomly selected. The remaining variables have missing values according to a logistic model with random weights,
@@ -81,7 +86,11 @@ def MAR_mask(X: np.ndarray, p: float, p_obs: float) -> np.ndarray:
     d_na = d - d_obs  # number of variables that will have missing values
 
     # Sample variables that will all be observed, and those with missing values:
-    idxs_obs = np.random.choice(d, d_obs, replace=False)
+    if sample_columns:
+        idxs_obs = np.random.choice(d, d_obs, replace=False)
+    else:
+        idxs_obs = list(range(d_obs))
+
     idxs_nas = np.array([i for i in range(d) if i not in idxs_obs])
 
     # Other variables will have NA proportions that depend on those observed variables, through a logistic model
@@ -266,6 +275,7 @@ def simulate_nan(
     opt: str = "logistic",
     p_obs: float = 0.5,
     q: float = 0,
+    sample_columns: bool = True,
 ) -> dict:
     """
     Generate missing values for specifics missing-data mechanism and proportion of missing values.
@@ -286,7 +296,7 @@ def simulate_nan(
     """
 
     if mecha == "MAR":
-        mask = MAR_mask(X, p_miss, p_obs).astype(float)
+        mask = MAR_mask(X, p_miss, p_obs, sample_columns=sample_columns).astype(float)
     elif mecha == "MNAR" and opt == "logistic":
         mask = MNAR_mask_logistic(X, p_miss, p_obs).astype(float)
     elif mecha == "MNAR" and opt == "quantile":

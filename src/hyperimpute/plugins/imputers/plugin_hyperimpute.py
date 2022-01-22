@@ -72,6 +72,7 @@ class HyperbandOptimizer:
         self.category = category
         self.failure_score = -9999999
 
+        self.predictions = Predictions(category=category)
         if category == "classifier":
             self.seeds = classifier_seed
         else:
@@ -87,14 +88,16 @@ class HyperbandOptimizer:
         self.s_max = int(self.logeta(self.max_iter))
         self.B = (self.s_max + 1) * self.max_iter
 
+        self._reset()
+
+    def _reset(self) -> None:
         self.candidate = {
             "score": self.failure_score,
             "name": self.seeds[0],
             "params": {},
         }
-        self.visited: Set[str] = set()
-        self.predictions = Predictions(category=category)
 
+        self.visited: Set[str] = set()
         self.model_best_score = {}
         for seed in self.seeds:
             self.model_best_score[seed] = -np.inf
@@ -158,14 +161,15 @@ class HyperbandOptimizer:
                 "params": params,
                 "name": model_name,
             }
-            if score > self.model_best_score[model_name]:
-                self.model_best_score[model_name] = score
+        if score > self.model_best_score[model_name]:
+            self.model_best_score[model_name] = score
 
         return score
 
     def evaluate(
         self, X: pd.DataFrame, y: pd.DataFrame
     ) -> Tuple[PredictionPlugin, float]:
+        self._reset()
         self._baseline(X, y)
 
         for s in reversed(range(self.s_max + 1)):
@@ -768,7 +772,7 @@ class IterativeErrorCorrection:
 
     def _fit_transform_inner_optimization(self, X: pd.DataFrame) -> pd.DataFrame:
         log.info("  > HyperImpute using inner optimization")
-        prev_obj_score = -10e10
+        best_obj_score = -10e10
         patience = 0
 
         for it in range(self.n_inner_iter):
@@ -795,16 +799,15 @@ class IterativeErrorCorrection:
                 )
                 break
 
-            if np.abs(obj_score - prev_obj_score) < OUTER_TOL:
+            if obj_score < best_obj_score:
                 patience += 1
             else:
+                best_obj_score = obj_score
                 patience = 0
 
             if patience > self.select_patience:
                 log.info("     >>>> Early stopping on objective diff iteration")
                 break
-
-            prev_obj_score = obj_score
 
         return X
 
@@ -846,7 +849,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         random_state: int = 0,
         select_model_by_column: bool = True,
         select_model_by_iteration: bool = True,
-        select_patience: int = 5,
+        select_patience: int = 10,
         select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
         outer_iteration_enabled: bool = False,
