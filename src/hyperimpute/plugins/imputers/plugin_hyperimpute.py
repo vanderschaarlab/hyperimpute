@@ -90,17 +90,18 @@ class HyperbandOptimizer:
 
         self._reset()
 
-    def _reset(self) -> None:
+        self.model_best_score = {}
+        for seed in self.seeds:
+            self.model_best_score[seed] = -np.inf
+
         self.candidate = {
             "score": self.failure_score,
             "name": self.seeds[0],
             "params": {},
         }
 
+    def _reset(self) -> None:
         self.visited: Set[str] = set()
-        self.model_best_score = {}
-        for seed in self.seeds:
-            self.model_best_score[seed] = -np.inf
 
     def _hash_dict(self, name: str, dict_val: dict) -> str:
         return json.dumps(
@@ -799,11 +800,11 @@ class IterativeErrorCorrection:
                 )
                 break
 
-            if obj_score < best_obj_score:
-                patience += 1
-            else:
+            if obj_score > best_obj_score:
                 best_obj_score = obj_score
                 patience = 0
+            else:
+                patience += 1
 
             if patience > self.select_patience:
                 log.info("     >>>> Early stopping on objective diff iteration")
@@ -849,7 +850,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         random_state: int = 0,
         select_model_by_column: bool = True,
         select_model_by_iteration: bool = True,
-        select_patience: int = 10,
+        select_patience: int = 5,
         select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
         outer_iteration_enabled: bool = False,

@@ -1,6 +1,6 @@
 # stdlib
 import copy
-from time import sleep, time
+from time import time
 from typing import Any
 import warnings
 
@@ -23,8 +23,9 @@ from hyperimpute.plugins.utils.simulate import simulate_nan
 from hyperimpute.utils.distributions import enable_reproducible_results
 from hyperimpute.utils.metrics import generate_score, print_score
 
-warnings.filterwarnings("ignore")
 enable_reproducible_results()
+
+warnings.filterwarnings("ignore")
 
 
 imputers = Imputers()
@@ -48,7 +49,7 @@ def ampute(
             np.random.choice(len(columns), size=column_limit, replace=False)
         ]
     else:
-        sampled_columns = list(range(column_limit))
+        sampled_columns = columns[list(range(column_limit))]
 
     x_simulated = simulate_nan(
         x[sampled_columns].values, p_miss, mechanism, sample_columns=sample_columns
@@ -260,7 +261,7 @@ def evaluate_dataset_repeated_internal(
     distr_results_dict: dict = {}
 
     def eval_local(it: int) -> Any:
-        sleep(5 * it)
+        enable_reproducible_results(it)
         if debug:
             print("> evaluation trial ", it)
         return evaluate_dataset(
