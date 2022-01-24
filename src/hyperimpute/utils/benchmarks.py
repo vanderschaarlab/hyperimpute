@@ -5,13 +5,12 @@ from typing import Any
 import warnings
 
 # third party
-from IPython.display import HTML, display
+from IPython.display import display
 from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from scipy.stats import wasserstein_distance
 from sklearn.preprocessing import MinMaxScaler
-import tabulate
 
 # hyperimpute absolute
 import hyperimpute.logger as log
@@ -289,19 +288,21 @@ def compare_models(
 
     if display_results:
         log.info(f"benchmark took {time() - start}")
-        headers = ["Scenario", "miss_pct [0, 1]"] + ["Our method"] + ref_methods
+        headers = (
+            ["Scenario", "miss_pct [0, 1]"]
+            + [f"Evaluated: {evaluated_model.name()}"]
+            + ref_methods
+        )
 
         sep = "\n==========================================================\n\n"
         print("RMSE score")
-        display(
-            HTML(tabulate.tabulate(rmse_str_results, headers=headers, tablefmt="html"))
-        )
+        data = pd.DataFrame(rmse_str_results, columns=headers)
+        display(data)
 
         print(sep + "Wasserstein score")
 
-        display(
-            HTML(tabulate.tabulate(distr_str_results, headers=headers, tablefmt="html"))
-        )
+        data = pd.DataFrame(distr_str_results, columns=headers)
+        display(data)
 
     return {
         "headers": headers,
