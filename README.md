@@ -124,6 +124,26 @@ imputers.add(knn_imputer, KNN)
 
 assert imputers.get(knn_imputer) is not None
 ```
+Benchmark imputation models on a dataset
+```python
+from sklearn.datasets import load_iris
+from hyperimpute.plugins.imputers import Imputers
+from hyperimpute.utils.benchmarks import compare_models
+
+X, y = load_iris(as_frame=True, return_X_y=True)
+
+imputer = Imputers().get("hyperimpute")
+
+compare_models(
+    name="example",
+    evaluated_model=imputer,
+    X_raw=X,
+    ref_methods=["ice", "missforest"],
+    scenarios=["MAR"],
+    miss_pct=[0.1, 0.3],
+    n_iter=2,
+)
+```
 
 ## 📓 Tutorials
  - [Tutorial 0: Imputation basics](tutorials/tutorial_00_imputer_plugins.ipynb)
