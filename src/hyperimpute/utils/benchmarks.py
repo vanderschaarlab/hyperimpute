@@ -10,14 +10,12 @@ from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from scipy.stats import wasserstein_distance
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 import tabulate
 
 # hyperimpute absolute
+import hyperimpute.logger as log
 from hyperimpute.plugins.imputers import Imputers
-from hyperimpute.plugins.prediction import Predictions
 from hyperimpute.plugins.utils.metrics import RMSE
 from hyperimpute.plugins.utils.simulate import simulate_nan
 from hyperimpute.utils.distributions import enable_reproducible_results
@@ -29,9 +27,6 @@ warnings.filterwarnings("ignore")
 
 
 imputers = Imputers()
-
-# Simulation
-dispatcher = Parallel(n_jobs=4)
 
 
 def ampute(
@@ -112,42 +107,10 @@ def ws_score(imputed: pd.DataFrame, ground: pd.DataFrame) -> pd.DataFrame:
     return res
 
 
-def benchmark_using_downstream_model(
-    X: pd.DataFrame, imputed_X: pd.DataFrame, y: pd.DataFrame
-) -> float:
-    outcomes = np.unique(y)
-    if len(outcomes) < 10:
-        ground_model = Predictions(category="classifier").get("xgboost")
-        imputed_model = Predictions(category="classifier").get("xgboost")
-    else:
-        ground_model = Predictions(category="regression").get("xgboost_regressor")
-        imputed_model = Predictions(category="regression").get("xgboost_regressor")
-
-    (
-        X_train,
-        X_test,
-        imputed_X_train,
-        imputed_X_test,
-        y_train,
-        y_test,
-    ) = train_test_split(X, imputed_X, y)
-
-    ground_model.fit(X_train, y_train)
-    ground_y_hat = ground_model.predict(X_test)
-    ground_err = mean_squared_error(ground_y_hat, y_test)
-
-    imputed_model.fit(imputed_X_train, y_train)
-    imputed_y_hat = imputed_model.predict(X_test)
-    imputed_err = mean_squared_error(imputed_y_hat, y_test)
-
-    return imputed_err - ground_err
-
-
 def benchmark_model(
     name: str,
     model: Any,
     X: np.ndarray,
-    y: np.ndarray,
     X_miss: np.ndarray,
     mask: np.ndarray,
 ) -> tuple:
@@ -155,64 +118,55 @@ def benchmark_model(
 
     imputed = model.fit_transform(X_miss.copy())
 
-    downstream_score = 0
     distribution_score = ws_score(imputed, X)
     rmse_score = RMSE(np.asarray(imputed), np.asarray(X), np.asarray(mask))
 
-    print("benchmark ", model.name(), time() - start)
-    return rmse_score, distribution_score, downstream_score
+    log.info(f"benchmark {model.name()} took {time() - start}")
+    return rmse_score, distribution_score
 
 
 def benchmark_standard(
     model_name: str,
     X: np.ndarray,
-    y: np.ndarray,
     X_miss: np.ndarray,
     mask: np.ndarray,
 ) -> tuple:
     imputer = imputers.get(model_name)
-    return benchmark_model(model_name, imputer, X, y, X_miss, mask)
+    return benchmark_model(model_name, imputer, X, X_miss, mask)
 
 
 def evaluate_dataset(
     name: str,
     evaluated_model: Any,
     X_raw: pd.DataFrame,
-    y: pd.DataFrame,
     ref_methods: list = ["mean", "missforest", "ice", "gain", "sinkhorn", "softimpute"],
     scenarios: list = ["MAR", "MCAR", "MNAR"],
     miss_pct: list = [0.1, 0.3, 0.5],
-    debug: bool = False,
     sample_columns: bool = True,
 ) -> tuple:
     imputation_scenarios = simulate_scenarios(X_raw, sample_columns=sample_columns)
 
     rmse_results: dict = {}
     distr_results: dict = {}
-    downstream_results: dict = {}
 
     for scenario in scenarios:
 
         rmse_results[scenario] = {}
         distr_results[scenario] = {}
-        downstream_results[scenario] = {}
 
         for missingness in miss_pct:
-            if debug:
-                print("  > eval ", scenario, missingness)
+            log.debug(f"  > eval {scenario} {missingness}")
             rmse_results[scenario][missingness] = {}
             distr_results[scenario][missingness] = {}
-            downstream_results[scenario][missingness] = {}
 
             try:
                 x, x_miss, mask = imputation_scenarios[scenario][missingness]
 
-                (our_rmse_score, our_distribution_score, _,) = benchmark_model(
-                    name, copy.deepcopy(evaluated_model), x, y, x_miss, mask
+                (our_rmse_score, our_distribution_score) = benchmark_model(
+                    name, copy.deepcopy(evaluated_model), x, x_miss, mask
                 )
                 rmse_results[scenario][missingness]["our"] = our_rmse_score
                 distr_results[scenario][missingness]["our"] = our_distribution_score
-                # downstream_results[scenario][missingness]["our"] = our_downstream_score
 
                 for method in ref_methods:
                     x, x_miss, mask = imputation_scenarios[scenario][missingness]
@@ -220,29 +174,28 @@ def evaluate_dataset(
                     (
                         mse_score,
                         distribution_score,
-                        downstream_score,
-                    ) = benchmark_standard(method, x, y, x_miss, mask)
+                    ) = benchmark_standard(method, x, x_miss, mask)
                     rmse_results[scenario][missingness][method] = mse_score
                     distr_results[scenario][missingness][method] = distribution_score
-                    # downstream_results[scenario][missingness][method] = downstream_score
             except BaseException as e:
-                print("scenario failed", str(e))
+                log.error(f"scenario failed {str(e)}")
                 continue
     return rmse_results, distr_results
 
 
-def evaluate_dataset_repeated_internal(
+def compare_models(
     name: str,
     evaluated_model: Any,
     X_raw: pd.DataFrame,
-    y: pd.DataFrame,
     ref_methods: list = ["mean", "missforest", "ice", "gain", "sinkhorn", "softimpute"],
     scenarios: list = ["MNAR"],
     miss_pct: list = [0.1, 0.3, 0.5, 0.7],
     n_iter: int = 2,
-    debug: bool = False,
     sample_columns: bool = True,
+    display_results: bool = True,
+    n_jobs: int = 1,
 ) -> dict:
+    dispatcher = Parallel(n_jobs=n_jobs)
     start = time()
 
     def add_metrics(
@@ -262,16 +215,13 @@ def evaluate_dataset_repeated_internal(
 
     def eval_local(it: int) -> Any:
         enable_reproducible_results(it)
-        if debug:
-            print("> evaluation trial ", it)
+        log.debug(f"> evaluation trial {it}")
         return evaluate_dataset(
             name=name,
             evaluated_model=evaluated_model,
             X_raw=X_raw,
-            y=y,
             ref_methods=ref_methods,
             scenarios=scenarios,
-            debug=debug,
             miss_pct=miss_pct,
             sample_columns=sample_columns,
         )
@@ -337,18 +287,21 @@ def evaluate_dataset_repeated_internal(
             distr_str_results.append(local_distr_str_results)
             distr_results.append(local_distr_results)
 
-    print("benchmark took ", time() - start)
-    headers = ["Scenario", "miss_pct [0, 1]"] + ["Our method"] + ref_methods
+    if display_results:
+        log.info(f"benchmark took {time() - start}")
+        headers = ["Scenario", "miss_pct [0, 1]"] + ["Our method"] + ref_methods
 
-    sep = "\n==========================================================\n\n"
-    print("RMSE score")
-    display(HTML(tabulate.tabulate(rmse_str_results, headers=headers, tablefmt="html")))
+        sep = "\n==========================================================\n\n"
+        print("RMSE score")
+        display(
+            HTML(tabulate.tabulate(rmse_str_results, headers=headers, tablefmt="html"))
+        )
 
-    print(sep + "Wasserstein score")
+        print(sep + "Wasserstein score")
 
-    display(
-        HTML(tabulate.tabulate(distr_str_results, headers=headers, tablefmt="html"))
-    )
+        display(
+            HTML(tabulate.tabulate(distr_str_results, headers=headers, tablefmt="html"))
+        )
 
     return {
         "headers": headers,

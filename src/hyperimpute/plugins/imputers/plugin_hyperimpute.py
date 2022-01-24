@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.impute import MissingIndicator
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import LabelEncoder
+import torch
 
 # hyperimpute absolute
 import hyperimpute.logger as log
@@ -38,13 +39,14 @@ SMALL_DATA_REG_SEEDS = [
 LARGE_DATA_CLF_SEEDS = SMALL_DATA_CLF_SEEDS + [
     "xgboost",
     "catboost",
-    "neural_nets",
 ]
 LARGE_DATA_REG_SEEDS = SMALL_DATA_REG_SEEDS + [
     "xgboost_regressor",
     "catboost_regressor",
-    "neural_nets_regression",
 ]
+if torch.cuda.is_available():
+    LARGE_DATA_CLF_SEEDS.append("neural_nets")
+    LARGE_DATA_REG_SEEDS.append("neural_nets_regression")
 
 
 class NpEncoder(json.JSONEncoder):
