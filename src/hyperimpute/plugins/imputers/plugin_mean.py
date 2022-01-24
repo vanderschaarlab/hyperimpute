@@ -28,14 +28,10 @@ class MeanPlugin(base.ImputerPlugin):
         3  2.000000  2.000000  2.000000  2.000000
     """
 
-    def __init__(self, model: Any = None, **kwargs: Any) -> None:
+    def __init__(self) -> None:
         super().__init__()
 
-        if model:
-            self._model = model
-            return
-
-        self._model = SimpleImputer(strategy="mean", **kwargs)
+        self._model = SimpleImputer(strategy="mean")
 
     @staticmethod
     def name() -> str:

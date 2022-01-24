@@ -211,14 +211,10 @@ class EMPlugin(base.ImputerPlugin):
         3  2.000000  2.000000  2.000000  2.000000
     """
 
-    def __init__(self, model: Any = None, **kwargs: Any) -> None:
+    def __init__(self) -> None:
         super().__init__()
 
-        if model:
-            self._model = model
-            return
-
-        self._model = EM(**kwargs)
+        self._model = EM()
 
     @decorators.benchmark
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "EMPlugin":

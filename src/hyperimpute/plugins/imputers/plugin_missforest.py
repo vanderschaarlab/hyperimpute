@@ -48,13 +48,14 @@ class MissForestPlugin(base.ImputerPlugin):
         random_state: Union[int, None] = 0,
         initial_strategy: int = 0,
         imputation_order: int = 0,
-        model: Any = None,
     ) -> None:
         super().__init__()
 
-        if model:
-            self._model = model
-            return
+        self.n_estimators = n_estimators
+        self.max_iter = max_iter
+        self.random_state = random_state
+        self.initial_strategy = initial_strategy
+        self.imputation_order = imputation_order
 
         if not random_state:
             random_state = int(time.time())

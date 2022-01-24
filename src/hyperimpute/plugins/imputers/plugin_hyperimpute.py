@@ -850,7 +850,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         random_state: int = 0,
         select_model_by_column: bool = True,
         select_model_by_iteration: bool = True,
-        select_patience: int = 5,
+        select_patience: int = 3,
         select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
         outer_iteration_enabled: bool = False,
@@ -858,26 +858,46 @@ class HyperImputePlugin(base.ImputerPlugin):
         super().__init__()
 
         enable_reproducible_results(random_state)
+        self.classifier_seed = classifier_seed
+        self.regression_seed = regression_seed
+        self.imputation_order = imputation_order
+        self.baseline_imputer = baseline_imputer
+        self.optimizer = optimizer
+        self.class_threshold = class_threshold
+        self.optimize_thresh = optimize_thresh
+        self.n_inner_iter = n_inner_iter
+        self.n_outer_iter = n_outer_iter
+        self.train_step = train_step
+        self.random_state = random_state
+        self.select_model_by_column = select_model_by_column
+        self.select_model_by_iteration = select_model_by_iteration
+        self.select_patience = select_patience
+        self.select_lazy = select_lazy
+        self.inner_loop_hook = inner_loop_hook
+        self.outer_iteration_enabled = outer_iteration_enabled
+
         self.model = IterativeErrorCorrection(
             "hyperimpute_plugin",
-            classifier_seed=classifier_seed,
-            regression_seed=regression_seed,
-            optimizer=optimizer,
-            baseline_imputer=HyperImputePlugin.initial_strategy_vals[baseline_imputer],
-            imputation_order_strategy=HyperImputePlugin.imputation_order_vals[
-                imputation_order
+            classifier_seed=self.classifier_seed,
+            regression_seed=self.regression_seed,
+            optimizer=self.optimizer,
+            baseline_imputer=HyperImputePlugin.initial_strategy_vals[
+                self.baseline_imputer
             ],
-            class_threshold=class_threshold,
-            optimize_thresh=optimize_thresh,
-            n_inner_iter=n_inner_iter,
-            n_outer_iter=n_outer_iter,
-            train_step=train_step,
-            select_model_by_column=select_model_by_column,
-            select_model_by_iteration=select_model_by_iteration,
-            select_patience=select_patience,
-            select_lazy=select_lazy,
-            inner_loop_hook=inner_loop_hook,
-            outer_iteration_enabled=outer_iteration_enabled,
+            imputation_order_strategy=HyperImputePlugin.imputation_order_vals[
+                self.imputation_order
+            ],
+            class_threshold=self.class_threshold,
+            optimize_thresh=self.optimize_thresh,
+            n_inner_iter=self.n_inner_iter,
+            n_outer_iter=self.n_outer_iter,
+            train_step=self.train_step,
+            select_model_by_column=self.select_model_by_column,
+            select_model_by_iteration=self.select_model_by_iteration,
+            select_patience=self.select_patience,
+            select_lazy=self.select_lazy,
+            inner_loop_hook=self.inner_loop_hook,
+            outer_iteration_enabled=self.outer_iteration_enabled,
         )
 
     @staticmethod

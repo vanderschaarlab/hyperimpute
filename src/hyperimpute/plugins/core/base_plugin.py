@@ -3,7 +3,6 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, List
 
 # third party
-import numpy as np
 from optuna.trial import Trial
 import pandas as pd
 
@@ -31,16 +30,7 @@ class Plugin(metaclass=ABCMeta):
     """
 
     def __init__(self) -> None:
-        self.output = pd.DataFrame
-        self.fitted = False
-
-    def change_output(self, output: str) -> None:
-        if output not in ["pandas", "numpy"]:
-            raise RuntimeError("Invalid output type")
-        if output == "pandas":
-            self.output = pd.DataFrame
-        elif output == "numpy":
-            self.output = np.asarray
+        pass
 
     @staticmethod
     @abstractmethod
@@ -129,21 +119,13 @@ class Plugin(metaclass=ABCMeta):
 
         return out
 
-    @property
-    def fitted(self) -> bool:
-        return self._fitted
-
-    @fitted.setter
-    def fitted(self, value: bool) -> None:
-        self._fitted = value
-
     @abstractmethod
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "Plugin":
         ...
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = cast.to_dataframe(X)
-        return self.output(self._transform(X))
+        return pd.DataFrame(self._transform(X))
 
     @abstractmethod
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -151,7 +133,7 @@ class Plugin(metaclass=ABCMeta):
 
     def predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         X = cast.to_dataframe(X)
-        return self.output(self._predict(X, *args, *kwargs))
+        return pd.DataFrame(self._predict(X, *args, *kwargs))
 
     @abstractmethod
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:

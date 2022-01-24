@@ -28,14 +28,13 @@ class MIWAEPlugin(base.ImputerPlugin):
         batch_size: int = 256,
         latent_size: int = 1,
         n_hidden: int = 1,
-        **kwargs: Any,
     ) -> None:
         super().__init__()
 
         self.n_epochs = n_epochs
-        self.bs = batch_size  # batch size
-        self.h = n_hidden  # number of hidden units in (same for all MLPs)
-        self.d = latent_size  # dimension of the latent space
+        self.batch_size = batch_size  # batch size
+        self.n_hidden = n_hidden  # number of hidden units in (same for all MLPs)
+        self.latent_size = latent_size  # dimension of the latent space
         self.K = 20  # number of IS during training
 
     @staticmethod
@@ -53,16 +52,18 @@ class MIWAEPlugin(base.ImputerPlugin):
         out_encoder = self.encoder(iota_x)
         q_zgivenxobs = td.Independent(
             td.Normal(
-                loc=out_encoder[..., : self.d],
-                scale=torch.nn.Softplus()(out_encoder[..., self.d : (2 * self.d)]),
+                loc=out_encoder[..., : self.latent_size],
+                scale=torch.nn.Softplus()(
+                    out_encoder[..., self.latent_size : (2 * self.latent_size)]
+                ),
             ),
             1,
         )
 
         zgivenx = q_zgivenxobs.rsample([self.K])
-        zgivenx_flat = zgivenx.reshape([self.K * batch_size, self.d])
+        zgivenx_flat = zgivenx.reshape([self.K * batch_size, self.latent_size])
 
-        out_decoder = self.decoder(zgivenx_flat)
+        out_decoder = self.latent_sizeecoder(zgivenx_flat)
         all_means_obs_model = out_decoder[..., :p]
         all_scales_obs_model = (
             torch.nn.Softplus()(out_decoder[..., p : (2 * p)]) + 0.001
@@ -100,16 +101,18 @@ class MIWAEPlugin(base.ImputerPlugin):
         out_encoder = self.encoder(iota_x)
         q_zgivenxobs = td.Independent(
             td.Normal(
-                loc=out_encoder[..., : self.d],
-                scale=torch.nn.Softplus()(out_encoder[..., self.d : (2 * self.d)]),
+                loc=out_encoder[..., : self.latent_size],
+                scale=torch.nn.Softplus()(
+                    out_encoder[..., self.latent_size : (2 * self.latent_size)]
+                ),
             ),
             1,
         )
 
         zgivenx = q_zgivenxobs.rsample([L])
-        zgivenx_flat = zgivenx.reshape([L * batch_size, self.d])
+        zgivenx_flat = zgivenx.reshape([L * batch_size, self.latent_size])
 
-        out_decoder = self.decoder(zgivenx_flat)
+        out_decoder = self.latent_sizeecoder(zgivenx_flat)
         all_means_obs_model = out_decoder[..., :p]
         all_scales_obs_model = (
             torch.nn.Softplus()(out_decoder[..., p : (2 * p)]) + 0.001
@@ -163,41 +166,43 @@ class MIWAEPlugin(base.ImputerPlugin):
 
         self.p_z = td.Independent(
             td.Normal(
-                loc=torch.zeros(self.d).to(DEVICE), scale=torch.ones(self.d).to(DEVICE)
+                loc=torch.zeros(self.latent_size).to(DEVICE),
+                scale=torch.ones(self.latent_size).to(DEVICE),
             ),
             1,
         )
 
-        self.decoder = nn.Sequential(
-            torch.nn.Linear(self.d, self.h),
+        self.latent_sizeecoder = nn.Sequential(
+            torch.nn.Linear(self.latent_size, self.n_hidden),
             torch.nn.ReLU(),
-            torch.nn.Linear(self.h, self.h),
+            torch.nn.Linear(self.n_hidden, self.n_hidden),
             torch.nn.ReLU(),
             torch.nn.Linear(
-                self.h, 3 * p
+                self.n_hidden, 3 * p
             ),  # the decoder will output both the mean, the scale, and the number of degrees of freedoms (hence the 3*p)
         ).to(DEVICE)
 
         self.encoder = nn.Sequential(
-            torch.nn.Linear(p, self.h),
+            torch.nn.Linear(p, self.n_hidden),
             torch.nn.ReLU(),
-            torch.nn.Linear(self.h, self.h),
+            torch.nn.Linear(self.n_hidden, self.n_hidden),
             torch.nn.ReLU(),
             torch.nn.Linear(
-                self.h, 2 * self.d
+                self.n_hidden, 2 * self.latent_size
             ),  # the encoder will output both the mean and the diagonal covariance
         ).to(DEVICE)
 
         optimizer = optim.Adam(
-            list(self.encoder.parameters()) + list(self.decoder.parameters()), lr=1e-3
+            list(self.encoder.parameters()) + list(self.latent_sizeecoder.parameters()),
+            lr=1e-3,
         )
 
         xhat = torch.clone(xhat_0)  # This will be out imputed data matrix
 
         self.encoder.apply(weights_init)
-        self.decoder.apply(weights_init)
+        self.latent_sizeecoder.apply(weights_init)
 
-        bs = min(self.bs, n)
+        bs = min(self.batch_size, n)
 
         for ep in range(1, self.n_epochs):
             perm = np.random.permutation(
@@ -218,7 +223,7 @@ class MIWAEPlugin(base.ImputerPlugin):
             for it in range(len(batches_data)):
                 optimizer.zero_grad()
                 self.encoder.zero_grad()
-                self.decoder.zero_grad()
+                self.latent_sizeecoder.zero_grad()
                 b_data = batches_data[it]
                 b_mask = batches_mask[it].float()
                 loss = self._miwae_loss(iota_x=b_data, mask=b_mask)

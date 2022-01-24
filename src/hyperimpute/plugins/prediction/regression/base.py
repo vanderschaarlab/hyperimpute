@@ -3,6 +3,7 @@ from typing import Any, List
 
 # third party
 import pandas as pd
+from sklearn.base import BaseEstimator, RegressorMixin
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
@@ -10,7 +11,7 @@ import hyperimpute.plugins.prediction.base as prediction_base
 import hyperimpute.plugins.utils.cast as cast
 
 
-class RegressionPlugin(prediction_base.PredictionPlugin):
+class RegressionPlugin(RegressorMixin, BaseEstimator, prediction_base.PredictionPlugin):
     """Base class for the regression plugins.
 
     It provides the implementation for plugin.Plugin's subtype, _fit and _predict methods.
@@ -44,7 +45,6 @@ class RegressionPlugin(prediction_base.PredictionPlugin):
 
         X = cast.to_dataframe(X)
         self._fit(X, *args, **kwargs)
-        self.fitted = True
 
         return self
 

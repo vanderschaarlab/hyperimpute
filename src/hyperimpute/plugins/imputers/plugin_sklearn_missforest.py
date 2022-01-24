@@ -50,13 +50,14 @@ class SKLearnMissForestPlugin(base.ImputerPlugin):
         max_depth: int = 3,
         bootstrap: bool = True,
         random_state: Union[int, None] = 0,
-        model: Any = None,
     ) -> None:
         super().__init__()
 
-        if model:
-            self._model = model
-            return
+        self.n_estimators = n_estimators
+        self.max_iter = max_iter
+        self.max_depth = max_depth
+        self.bootstrap = bootstrap
+        self.random_state = random_state
 
         if not random_state:
             random_state = int(time.time())

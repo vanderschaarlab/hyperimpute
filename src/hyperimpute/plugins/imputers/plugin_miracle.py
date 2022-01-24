@@ -37,7 +37,6 @@ class MiraclePlugin(base.ImputerPlugin):
         window: int = 10,
         max_steps: int = 400,
         seed_imputation: str = "mean",
-        **kwargs: Any,
     ) -> None:
         super().__init__()
 

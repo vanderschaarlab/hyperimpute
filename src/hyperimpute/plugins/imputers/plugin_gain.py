@@ -147,7 +147,7 @@ class GainImputation(TransformerMixin):
     Args:
         batch_size: int
             The batch size for the training steps.
-        iterations: int
+        n_epochs: int
             Number of epochs for training.
         hint_rate: float
             Percentage of additional information for the discriminator.
@@ -158,12 +158,12 @@ class GainImputation(TransformerMixin):
     def __init__(
         self,
         batch_size: int = 256,
-        iterations: int = 1000,
+        n_epochs: int = 1000,
         hint_rate: float = 0.9,
         loss_alpha: float = 10,
     ) -> None:
         self.batch_size = batch_size
-        self.iterations = iterations
+        self.n_epochs = n_epochs
         self.hint_rate = hint_rate
         self.loss_alpha = loss_alpha
         self.norm_parameters: Union[dict, None] = None
@@ -227,7 +227,7 @@ class GainImputation(TransformerMixin):
 
             return x_mb, h_mb, m_mb
 
-        for it in range(self.iterations):
+        for it in range(self.n_epochs):
             D_solver.zero_grad()
 
             x_mb, h_mb, m_mb = sample()
@@ -330,14 +330,21 @@ class GainPlugin(base.ImputerPlugin):
         >>> plugin.fit_transform([[1, 1, 1, 1], [np.nan, np.nan, np.nan, np.nan], [1, 2, 2, 1], [2, 2, 2, 2]])
     """
 
-    def __init__(self, model: Any = None, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        batch_size: int = 128,
+        n_epochs: int = 100,
+        hint_rate: float = 0.8,
+        loss_alpha: int = 10,
+    ) -> None:
         super().__init__()
 
-        if model:
-            self._model = model
-            return
+        self.batch_size = batch_size
+        self.n_epochs = n_epochs
+        self.hint_rate = hint_rate
+        self.loss_alpha = loss_alpha
 
-        self._model = GainImputation(**kwargs)
+        self._model = GainImputation()
 
     @staticmethod
     def name() -> str:
@@ -347,7 +354,7 @@ class GainPlugin(base.ImputerPlugin):
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
         return [
             params.Categorical("batch_size", [64, 128, 256, 512]),
-            params.Integer("iterations", 100, 1000, 100),
+            params.Integer("n_epochs", 100, 1000, 100),
             params.Float("hint_rate", 0.8, 0.99),
             params.Integer("loss_alpha", 10, 100, 10),
         ]

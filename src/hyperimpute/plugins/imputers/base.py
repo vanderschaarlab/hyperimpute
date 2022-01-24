@@ -3,12 +3,13 @@ from typing import Any
 
 # third party
 import pandas as pd
+from sklearn.impute._base import _BaseImputer
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.base_plugin as plugin
 
 
-class ImputerPlugin(plugin.Plugin):
+class ImputerPlugin(_BaseImputer, plugin.Plugin):
     """Base class for the imputation plugins.
 
     It provides the implementation for plugin.Plugin.type() static method.

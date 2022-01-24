@@ -32,10 +32,10 @@ class SinkhornImputation(TransformerMixin):
         opt: torch.nn.optim.Optimizer, default=torch.optim.Adam
             Optimizer class to use for fitting.
 
-        niter : int, default=15
+        n_epochs : int, default=15
             Number of gradient updates for each model within a cycle.
 
-        batchsize : int, defatul=256
+        batch_size : int, defatul=256
             Size of the batches on which the sinkhorn divergence is evaluated.
 
         n_pairs : int, default=10
@@ -53,8 +53,8 @@ class SinkhornImputation(TransformerMixin):
         eps: float = 0.01,
         lr: float = 1e-2,
         opt: Any = torch.optim.Adam,
-        niter: int = 500,
-        batchsize: int = 256,
+        n_epochs: int = 500,
+        batch_size: int = 256,
         n_pairs: int = 1,
         noise: float = 1e-2,
         scaling: float = 0.9,
@@ -62,8 +62,8 @@ class SinkhornImputation(TransformerMixin):
         self.eps = eps
         self.lr = lr
         self.opt = opt
-        self.niter = niter
-        self.batchsize = batchsize
+        self.n_epochs = n_epochs
+        self.batch_size = batch_size
         self.n_pairs = n_pairs
         self.noise = noise
         self.sk = SamplesLoss(
@@ -75,9 +75,9 @@ class SinkhornImputation(TransformerMixin):
         X = X.clone()
         n, d = X.shape
 
-        if self.batchsize > n // 2:
+        if self.batch_size > n // 2:
             e = int(np.log2(n // 2))
-            self.batchsize = 2 ** e
+            self.batch_size = 2 ** e
 
         mask = torch.isnan(X).double().cpu()
         imps = (self.noise * torch.randn(mask.shape).double() + np.nanmean(X.cpu(), 0))[
@@ -89,15 +89,15 @@ class SinkhornImputation(TransformerMixin):
 
         optimizer = self.opt([imps], lr=self.lr)
 
-        for i in range(self.niter):
+        for i in range(self.n_epochs):
             X_filled = X.detach().clone()
             X_filled[mask.bool()] = imps
             loss: SamplesLoss = 0
 
             for _ in range(self.n_pairs):
 
-                idx1 = np.random.choice(n, self.batchsize, replace=False)
-                idx2 = np.random.choice(n, self.batchsize, replace=False)
+                idx1 = np.random.choice(n, self.batch_size, replace=False)
+                idx2 = np.random.choice(n, self.batch_size, replace=False)
 
                 X1 = X_filled[idx1]
                 X2 = X_filled[idx2]
@@ -141,21 +141,29 @@ class SinkhornPlugin(base.ImputerPlugin):
         eps: float = 0.01,
         lr: float = 1e-2,
         opt: Any = torch.optim.Adam,
-        niter: int = 500,
-        batchsize: int = 512,
+        n_epochs: int = 500,
+        batch_size: int = 512,
         n_pairs: int = 1,
         noise: float = 1e-2,
         scaling: float = 0.9,
-        **kwargs: Any
     ) -> None:
         super().__init__()
+
+        self.eps = eps
+        self.lr = lr
+        self.opt = opt
+        self.n_epochs = n_epochs
+        self.batch_size = batch_size
+        self.n_pairs = n_pairs
+        self.noise = noise
+        self.scaling = scaling
 
         self._model = SinkhornImputation(
             eps=eps,
             lr=lr,
             opt=opt,
-            niter=niter,
-            batchsize=batchsize,
+            n_epochs=n_epochs,
+            batch_size=batch_size,
             n_pairs=n_pairs,
             noise=noise,
             scaling=scaling,
@@ -170,8 +178,8 @@ class SinkhornPlugin(base.ImputerPlugin):
         return [
             params.Float("eps", 1e-3, 1e-2),
             params.Categorical("lr", [1e-2, 1e-3]),
-            params.Integer("niter", 100, 500, 100),
-            params.Integer("batchsize", 100, 200, 100),
+            params.Integer("n_epochs", 100, 500, 100),
+            params.Integer("batch_size", 100, 200, 100),
             params.Categorical("noise", [1e-2, 1e-3, 1e-4]),
             params.Float("scaling", 0.8, 0.99),
         ]
