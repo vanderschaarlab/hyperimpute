@@ -37,23 +37,60 @@ imputers = Imputers()
 
 imputers.list()
 ```
-Impute a dataset using a method
+Impute a dataset using one of the available methods
 ```python
 import pandas as pd
 import numpy as np
 from hyperimpute.plugins.imputers import Imputers
 
-imputers = Imputers()
+X = pd.DataFrame([[1, 1, 1, 1], [4, 5, np.nan, np.nan], [3, 3, 9, 9], [2, 2, 2, 2]])
+
+plugin = Imputers().get("miracle")
+out = plugin.fit_transform(X.copy())
+print(method, out)
+```
+Specify the baseline models for HyperImpute
+```python
+import pandas as pd
+import numpy as np
+from hyperimpute.plugins.imputers import Imputers
 
 X = pd.DataFrame([[1, 1, 1, 1], [4, 5, np.nan, np.nan], [3, 3, 9, 9], [2, 2, 2, 2]])
 
-for method in ["mean", "missforest", "hyperimpute"]:
-    plugin = imputers.get(method)
+plugin = Imputers().get(
+    "hyperimpute",
+    optimizer="hyperband",
+    classifier_seed=["logistic_regression"],
+    regression_seed=["linear_regression"],
+)
 
-    out = plugin.fit_transform(X.copy())
-    print(method, out)
+out = plugin.fit_transform(X.copy())
+print(out)
 ```
+Use an imputer in a SKLearn pipeline
+```python
+import pandas as pd
+import numpy as np
 
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestRegressor
+
+from hyperimpute.plugins.imputers import Imputers
+
+X = pd.DataFrame([[1, 1, 1, 1], [4, 5, np.nan, np.nan], [3, 3, 9, 9], [2, 2, 2, 2]])
+y = pd.Series([1, 2, 1, 2])
+
+imputer = Imputers().get("hyperimpute")
+
+estimator = Pipeline(
+    [
+        ("imputer", imputer),
+        ("forest", RandomForestRegressor(random_state=0, n_estimators=100)),
+    ]
+)
+
+estimator.fit(X, y)
+```
 Write a new imputation plugin
 ```python
 from sklearn.impute import KNNImputer
@@ -91,8 +128,8 @@ assert imputers.get(knn_imputer) is not None
 ## 📓 Tutorials
  - [Tutorial 0: Imputation basics](tutorials/tutorial_00_imputer_plugins.ipynb)
  - [Tutorial 1: AutoML for imputation](tutorials/tutorial_01_bayesian_optimization_over_imputers.ipynb)
- - [Tutorial 2: HyperImpute example](tutorials/tutorial_02_hyperimpute_example.ipynb)
- - [Tutorial 3: HyperImpute with Hyperband](tutorials/tutorial_03_hyperimpute_with_hyperband.ipynb)
+ - [Tutorial 2: HyperImpute example](tutorials/experiments_01_hyperimpute_with_naive_search.ipynb)
+ - [Tutorial 3: HyperImpute with Hyperband](tutorials/experiments_01_hyperimpute_with_hyperband.ipynb)
  
 ## :zap: Imputation methods
 The following table contains the default imputation plugins:
@@ -110,6 +147,9 @@ The following table contains the default imputation plugins:
 |**EM**|Iterative procedure which uses other variables to impute a value (Expectation), then checks whether that is the value most likely (Maximization) - [`EM imputation algorithm`](https://joon3216.github.io/research_materials/2019/em_imputation.html)|[`plugin_em.py`](src/hyperimpute/plugins//imputers/plugin_em.py) |
 |**Sinkhorn**|[`Missing Data Imputation using Optimal Transport`](https://arxiv.org/pdf/2002.03860.pdf)|[`plugin_sinkhorn.py`](src/hyperimpute/plugins/imputers/plugin_sinkhorn.py) |
 |**GAIN**|[`GAIN: Missing Data Imputation using Generative Adversarial Nets`](https://arxiv.org/abs/1806.02920)|[`plugin_gain.py`](src/hyperimpute/plugins/imputers/plugin_gain.py) |
+|**MIRACLE**|[`MIRACLE: Causally-Aware Imputation via Learning Missing Data Mechanisms`](https://arxiv.org/abs/2111.03187)|[`plugin_miracle.py`](src/hyperimpute/plugins/imputers/plugin_miracle.py) |
+|**MIWAE**|[`MIWAE: Deep Generative Modelling and Imputation of Incomplete Data
+`](https://arxiv.org/abs/1812.02633)|[`plugin_miwae.py`](src/hyperimpute/plugins/imputers/plugin_miwae.py) |
 
 
 ## :hammer: Tests 
