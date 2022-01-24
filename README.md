@@ -67,7 +67,7 @@ plugin = Imputers().get(
 out = plugin.fit_transform(X.copy())
 print(out)
 ```
-Use an imputer in a SKLearn pipeline
+Use an imputer with a SKLearn pipeline
 ```python
 import pandas as pd
 import numpy as np
@@ -148,8 +148,7 @@ The following table contains the default imputation plugins:
 |**Sinkhorn**|[`Missing Data Imputation using Optimal Transport`](https://arxiv.org/pdf/2002.03860.pdf)|[`plugin_sinkhorn.py`](src/hyperimpute/plugins/imputers/plugin_sinkhorn.py) |
 |**GAIN**|[`GAIN: Missing Data Imputation using Generative Adversarial Nets`](https://arxiv.org/abs/1806.02920)|[`plugin_gain.py`](src/hyperimpute/plugins/imputers/plugin_gain.py) |
 |**MIRACLE**|[`MIRACLE: Causally-Aware Imputation via Learning Missing Data Mechanisms`](https://arxiv.org/abs/2111.03187)|[`plugin_miracle.py`](src/hyperimpute/plugins/imputers/plugin_miracle.py) |
-|**MIWAE**|[`MIWAE: Deep Generative Modelling and Imputation of Incomplete Data
-`](https://arxiv.org/abs/1812.02633)|[`plugin_miwae.py`](src/hyperimpute/plugins/imputers/plugin_miwae.py) |
+|**MIWAE**|[`MIWAE: Deep Generative Modelling and Imputation of Incomplete Data`](https://arxiv.org/abs/1812.02633)|[`plugin_miwae.py`](src/hyperimpute/plugins/imputers/plugin_miwae.py) |
 
 
 ## :hammer: Tests 
