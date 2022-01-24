@@ -113,11 +113,7 @@ class Plugin(metaclass=ABCMeta):
 
     def fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "Plugin":
         X = cast.to_dataframe(X)
-
-        out = self._fit(X, *args, **kwargs)
-        self.fitted = True
-
-        return out
+        return self._fit(X, *args, **kwargs)
 
     @abstractmethod
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "Plugin":
