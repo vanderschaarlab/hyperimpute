@@ -15,16 +15,16 @@ from hyperimpute.utils.serialization import load_model, save_model
 
 
 def from_serde() -> ImputerPlugin:
-    buff = save_model(plugin(iterations=100))
+    buff = save_model(plugin(n_epochs=100))
     return load_model(buff)
 
 
 def from_api() -> ImputerPlugin:
-    return Imputers().get("gain", iterations=100)
+    return Imputers().get("gain", n_epochs=100)
 
 
 def from_module() -> ImputerPlugin:
-    return plugin(iterations=100)
+    return plugin(n_epochs=100)
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
