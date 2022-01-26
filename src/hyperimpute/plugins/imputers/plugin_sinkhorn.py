@@ -51,7 +51,7 @@ class SinkhornImputation(TransformerMixin):
     def __init__(
         self,
         eps: float = 0.01,
-        lr: float = 1e-2,
+        lr: float = 1e-3,
         opt: Any = torch.optim.Adam,
         n_epochs: int = 500,
         batch_size: int = 256,
@@ -111,7 +111,6 @@ class SinkhornImputation(TransformerMixin):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
         X_filled = X.detach().clone()
         X_filled[mask.bool()] = imps
 
