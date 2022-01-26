@@ -1,4 +1,5 @@
 # stdlib
+import multiprocessing
 from typing import Any, List, Optional
 
 # third party
@@ -43,21 +44,17 @@ class RandomForestPlugin(base.ClassifierPlugin):
 
     def __init__(
         self,
-        n_estimators: int = 50,
+        n_estimators: int = 10,
         criterion: int = 0,
         max_features: int = 0,
         min_samples_split: int = 2,
         bootstrap: bool = True,
-        min_samples_leaf: int = 2,
-        model: Any = None,
+        min_samples_leaf: int = 1,
+        max_depth: Optional[int] = 3,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
-        if model is not None:
-            self.model = model
-            return
-
         if hyperparam_search_iterations:
             n_estimators = int(hyperparam_search_iterations)
 
@@ -66,10 +63,10 @@ class RandomForestPlugin(base.ClassifierPlugin):
             criterion=RandomForestPlugin.criterions[criterion],
             max_features=RandomForestPlugin.features[max_features],
             min_samples_split=min_samples_split,
-            max_depth=3,
+            max_depth=max_depth,
             bootstrap=bootstrap,
             min_samples_leaf=min_samples_leaf,
-            n_jobs=-1,
+            n_jobs=max(1, int(multiprocessing.cpu_count() / 2)),
         )
 
     @staticmethod
@@ -84,6 +81,7 @@ class RandomForestPlugin(base.ClassifierPlugin):
             params.Categorical("min_samples_split", [2, 5, 10]),
             params.Categorical("bootstrap", [1, 0]),
             params.Categorical("min_samples_leaf", [2, 5, 10]),
+            params.Integer("max_depth", 1, 3),
         ]
 
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "RandomForestPlugin":

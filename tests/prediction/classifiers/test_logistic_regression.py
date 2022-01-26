@@ -46,11 +46,7 @@ def test_logistic_regression_plugin_type(test_plugin: PredictionPlugin) -> None:
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
 def test_logistic_regression_plugin_hyperparams(test_plugin: PredictionPlugin) -> None:
-    assert len(test_plugin.hyperparameter_space()) == 4
-    assert test_plugin.hyperparameter_space()[0].name == "C"
-    assert test_plugin.hyperparameter_space()[1].name == "solver"
-    assert test_plugin.hyperparameter_space()[2].name == "multi_class"
-    assert test_plugin.hyperparameter_space()[3].name == "class_weight"
+    assert len(test_plugin.hyperparameter_space()) == 5
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])

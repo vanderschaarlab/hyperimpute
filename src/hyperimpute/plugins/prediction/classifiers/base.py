@@ -3,6 +3,7 @@ from typing import Any
 
 # third party
 import pandas as pd
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.base_plugin as plugin
@@ -11,7 +12,9 @@ import hyperimpute.plugins.utils.cast as cast
 from hyperimpute.utils.tester import Eval
 
 
-class ClassifierPlugin(prediction_base.PredictionPlugin):
+class ClassifierPlugin(
+    ClassifierMixin, BaseEstimator, prediction_base.PredictionPlugin
+):
     """Base class for the classifier plugins.
 
     It provides the implementation for plugin.Plugin's subtype, _fit and _predict methods.

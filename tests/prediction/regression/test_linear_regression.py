@@ -44,7 +44,7 @@ def test_linear_regression_plugin_type(test_plugin: PredictionPlugin) -> None:
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
 def test_linear_regression_plugin_hyperparams(test_plugin: PredictionPlugin) -> None:
-    assert len(test_plugin.hyperparameter_space()) == 0
+    assert len(test_plugin.hyperparameter_space()) == 2
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])

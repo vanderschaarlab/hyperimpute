@@ -3,7 +3,7 @@ import copy
 import json
 import math
 import random
-from typing import Any, List, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 # third party
 import numpy as np
@@ -12,32 +12,41 @@ import pandas as pd
 from sklearn.impute import MissingIndicator
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import LabelEncoder
+import torch
 
 # hyperimpute absolute
 import hyperimpute.logger as log
 import hyperimpute.plugins.core.params as params
 from hyperimpute.plugins.imputers import Imputers
 import hyperimpute.plugins.imputers.base as base
-from hyperimpute.plugins.prediction import Predictions
+from hyperimpute.plugins.prediction import PredictionPlugin, Predictions
 from hyperimpute.utils.distributions import enable_reproducible_results
 from hyperimpute.utils.optimizer import EarlyStoppingExceeded, create_study
 from hyperimpute.utils.tester import evaluate_estimator, evaluate_regression
 
-TOL = 1e-3
+INNER_TOL = 1e-8
+OUTER_TOL = 1e-3
 
-SMALL_DATA_CLF_SEEDS = ["logistic_regression", "random_forest"]
-SMALL_DATA_REG_SEEDS = ["linear_regression", "random_forest_regressor"]
+SMALL_DATA_CLF_SEEDS = [
+    "random_forest",
+    "logistic_regression",
+]
+SMALL_DATA_REG_SEEDS = [
+    "random_forest_regressor",
+    "linear_regression",
+]
 
 LARGE_DATA_CLF_SEEDS = SMALL_DATA_CLF_SEEDS + [
     "xgboost",
     "catboost",
-    "neural_nets",
 ]
 LARGE_DATA_REG_SEEDS = SMALL_DATA_REG_SEEDS + [
     "xgboost_regressor",
     "catboost_regressor",
-    "neural_nets_regression",
 ]
+if torch.cuda.is_available():
+    LARGE_DATA_CLF_SEEDS.append("neural_nets")
+    LARGE_DATA_REG_SEEDS.append("neural_nets_regression")
 
 
 class NpEncoder(json.JSONEncoder):
@@ -63,7 +72,9 @@ class HyperbandOptimizer:
     ) -> None:
         self.name = name
         self.category = category
+        self.failure_score = -9999999
 
+        self.predictions = Predictions(category=category)
         if category == "classifier":
             self.seeds = classifier_seed
         else:
@@ -79,17 +90,20 @@ class HyperbandOptimizer:
         self.s_max = int(self.logeta(self.max_iter))
         self.B = (self.s_max + 1) * self.max_iter
 
-        self.candidate = {
-            "score": -np.inf,
-            "name": "nop",
-            "params": {},
-        }
-        self.visited: Set[str] = set()
-        self.predictions = Predictions(category=category)
+        self._reset()
 
         self.model_best_score = {}
         for seed in self.seeds:
             self.model_best_score[seed] = -np.inf
+
+        self.candidate = {
+            "score": self.failure_score,
+            "name": self.seeds[0],
+            "params": {},
+        }
+
+    def _reset(self) -> None:
+        self.visited: Set[str] = set()
 
     def _hash_dict(self, name: str, dict_val: dict) -> str:
         return json.dumps(
@@ -131,16 +145,18 @@ class HyperbandOptimizer:
         self, model_name: str, X: pd.DataFrame, y: pd.DataFrame, **params: Any
     ) -> float:
         model = self.predictions.get(model_name, **params)
-        try:
-            if self.category == "regression":
-                out = evaluate_regression(model, X, y, n_folds=2)
-                score = -out["clf"]["rmse"][0]
-            else:
-                out = evaluate_estimator(model, X, y, n_folds=2)
-                score = out["clf"]["aucroc"][0]
-        except BaseException as e:
-            log.error(f"      >>> {self.name}:{model_name}: eval failed {e}")
-            score = -9999
+        for n_folds in [2, 1]:
+            try:
+                if self.category == "regression":
+                    out = evaluate_regression(model, X, y, n_folds=n_folds)
+                    score = -(out["clf"]["rmse"][0] + out["clf"]["wnd"][0])
+                else:
+                    out = evaluate_estimator(model, X, y, n_folds=n_folds)
+                    score = out["clf"]["aucroc"][0]
+                break
+            except BaseException as e:
+                log.error(f"      >>> {self.name}:{model_name}: eval failed {e}")
+                score = self.failure_score
 
         if score > self.candidate["score"]:
             self.candidate = {
@@ -148,12 +164,15 @@ class HyperbandOptimizer:
                 "params": params,
                 "name": model_name,
             }
-            if score > self.model_best_score[model_name]:
-                self.model_best_score[model_name] = score
+        if score > self.model_best_score[model_name]:
+            self.model_best_score[model_name] = score
 
         return score
 
-    def evaluate(self, X: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:
+    def evaluate(
+        self, X: pd.DataFrame, y: pd.DataFrame
+    ) -> Tuple[PredictionPlugin, float]:
+        self._reset()
         self._baseline(X, y)
 
         for s in reversed(range(self.s_max + 1)):
@@ -197,8 +216,6 @@ class HyperbandOptimizer:
                 scores = [scores[i] for i in indices]
                 scores = scores[-saved:]
 
-        self.candidate["params"]["hyperparam_search_iterations"] = 100
-
         log.info(
             f"      >>> {self.name} -- best candidate {self.candidate['name']}: ({self.candidate['params']}) --- score : {self.candidate['score']}"
         )
@@ -207,8 +224,11 @@ class HyperbandOptimizer:
             self.model_best_score, key=self.model_best_score.get, reverse=True  # type: ignore
         )[:2]
 
-        return Predictions(category=self.category).get(
-            self.candidate["name"], **self.candidate["params"]
+        return (
+            Predictions(category=self.category).get(
+                self.candidate["name"], **self.candidate["params"]
+            ),
+            self.candidate["score"],
         )
 
 
@@ -225,6 +245,7 @@ class BayesianOptimizer:
         self.name = name
         self.category = category
 
+        self.failure_score = -9999999
         if category == "classifier":
             self.seeds = classifier_seed
         else:
@@ -242,7 +263,7 @@ class BayesianOptimizer:
                 patience=self.patience,
             )
 
-        self.best_score = -9999
+        self.best_score = self.failure_score
         self.best_candidate = self.seeds[0]
         self.best_params: dict = {}
 
@@ -261,15 +282,17 @@ class BayesianOptimizer:
 
         def evaluate_args(**kwargs: Any) -> float:
             model = plugin(**kwargs)
-            try:
-                if self.category == "regression":
-                    out = evaluate_regression(model, X, y)
-                    score = -out["clf"]["rmse"][0]
-                else:
-                    out = evaluate_estimator(model, X, y)
-                    score = out["clf"]["aucroc"][0]
-            except BaseException:
-                score = -9999
+            for n_folds in [2, 1]:
+                try:
+                    if self.category == "regression":
+                        out = evaluate_regression(model, X, y, n_folds=n_folds)
+                        score = -out["clf"]["rmse"][0]
+                    else:
+                        out = evaluate_estimator(model, X, y, n_folds=n_folds)
+                        score = out["clf"]["aucroc"][0]
+                    break
+                except BaseException:
+                    score = self.failure_score
 
             return score
 
@@ -305,8 +328,10 @@ class BayesianOptimizer:
 
         return study.best_value, study.best_trial.params
 
-    def evaluate(self, X_train: pd.DataFrame, y_train: pd.DataFrame) -> Any:
-        best_score = -9999
+    def evaluate(
+        self, X_train: pd.DataFrame, y_train: pd.DataFrame
+    ) -> Tuple[PredictionPlugin, float]:
+        best_score = self.failure_score
 
         if self.category == "classifier":
             mapped_labels = sorted(y_train.unique())
@@ -327,8 +352,11 @@ class BayesianOptimizer:
         log.info(
             f"     >>> Column {self.name} <-- score {self.best_score} <-- Model {self.best_candidate}({self.best_params})"
         )
-        return Predictions(category=self.category).get(
-            self.best_candidate, **self.best_params
+        return (
+            Predictions(category=self.category).get(
+                self.best_candidate, **self.best_params
+            ),
+            self.best_score,
         )
 
 
@@ -343,16 +371,20 @@ class SimpleOptimizer:
         self.name = name
         self.category = category
 
+        self.failure_score = -9999999
+        self.classifier_seed = classifier_seed
+        self.regression_seed = regression_seed
         if category == "classifier":
             self.seeds = classifier_seed
         else:
             self.seeds = regression_seed
 
         self.candidate = {
-            "score": -np.inf,
-            "name": "nop",
+            "score": self.failure_score,
+            "name": self.seeds[0],
             "params": {},
         }
+
         self.predictions = Predictions(category=category)
 
         self.model_best_score = {}
@@ -363,16 +395,20 @@ class SimpleOptimizer:
         self, model_name: str, X: pd.DataFrame, y: pd.DataFrame, **params: Any
     ) -> float:
         model = self.predictions.get(model_name, **params)
-        try:
-            if self.category == "regression":
-                out = evaluate_regression(model, X, y, n_folds=2)
-                score = -out["clf"]["rmse"][0]
-            else:
-                out = evaluate_estimator(model, X, y, n_folds=2)
-                score = out["clf"]["aucroc"][0]
-        except BaseException as e:
-            log.error(f"      >>> {self.name}:{model_name}: eval failed {e}")
-            score = -9999
+        for n_folds in [2, 1]:
+            try:
+                if self.category == "regression":
+                    out = evaluate_regression(model, X, y, n_folds=n_folds)
+                    score = -out["clf"]["rmse"][0]
+                else:
+                    out = evaluate_estimator(model, X, y, n_folds=n_folds)
+                    score = out["clf"]["aucroc"][0]
+                break
+            except BaseException as e:
+                log.error(
+                    f"      >>> {self.name}:{model_name}:{n_folds} folds eval failed {e}"
+                )
+                score = self.failure_score
 
         if score > self.candidate["score"]:
             self.candidate = {
@@ -385,15 +421,19 @@ class SimpleOptimizer:
 
         return score
 
-    def evaluate(self, X: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:
+    def evaluate(
+        self, X: pd.DataFrame, y: pd.DataFrame
+    ) -> Tuple[PredictionPlugin, float]:
         for seed in self.seeds:
             self._eval_params(seed, X, y)
-
         log.info(
             f"     >>> Column {self.name} <-- score {self.candidate['score']} <-- Model {self.candidate['name']}"
         )
-        return Predictions(category=self.category).get(
-            self.candidate["name"], **self.candidate["params"]
+        return (
+            Predictions(category=self.category).get(
+                self.candidate["name"], **self.candidate["params"]
+            ),
+            self.candidate["score"],
         )
 
 
@@ -408,9 +448,17 @@ class IterativeErrorCorrection:
         class_threshold: int = 20,
         optimize_thresh: int = 1000,
         optimize_thresh_upper: int = 3000,
-        imputation_order_strategy: str = "random",
+        imputation_order_strategy: str = "ascending",
         n_inner_iter: int = 50,
+        n_min_inner_iter: int = 10,
         n_outer_iter: int = 5,
+        train_step: int = 10,
+        select_model_by_column: bool = True,
+        select_model_by_iteration: bool = True,
+        select_patience: int = 3,
+        select_lazy: bool = True,
+        inner_loop_hook: Optional[Callable] = None,
+        outer_iteration_enabled: bool = False,
     ):
         if optimizer not in [
             "hyperband",
@@ -419,6 +467,17 @@ class IterativeErrorCorrection:
         ]:
             raise RuntimeError(f"Invalid optimizer {optimizer}")
 
+        self.select_model_by_column = select_model_by_column
+        self.select_model_by_iteration = select_model_by_iteration
+        self.select_patience = select_patience
+        self.select_lazy = select_lazy
+
+        if not select_model_by_column:
+            class_threshold = 0
+
+        log.info(
+            f"Iteration imputation: select_model_by_column: {select_model_by_column}, select_model_by_iteration: {select_model_by_iteration}"
+        )
         self.study = study
         self.class_threshold = class_threshold
         self.baseline_imputer = Imputers().get(baseline_imputer)
@@ -426,9 +485,13 @@ class IterativeErrorCorrection:
         self.optimize_thresh_upper = optimize_thresh_upper
         self.n_inner_iter = n_inner_iter
         self.n_outer_iter = n_outer_iter
+        self.n_min_inner_iter = n_min_inner_iter
         self.classifier_seed = classifier_seed
         self.regression_seed = regression_seed
         self.imputation_order_strategy = imputation_order_strategy
+        self.train_step = train_step
+        self.inner_loop_hook = inner_loop_hook
+        self.outer_iteration_enabled = outer_iteration_enabled
 
         self.optimizer: Any
         if optimizer == "hyperband":
@@ -439,6 +502,8 @@ class IterativeErrorCorrection:
             self.optimizer = SimpleOptimizer
 
         self.avail_data_thresh = 500
+        self.perf_trace: Dict[str, list] = {}
+        self.model_trace: Dict[str, list] = {}
 
     def _select_seeds(self, miss_cnt: int) -> dict:
         clf = self.classifier_seed
@@ -531,10 +596,42 @@ class IterativeErrorCorrection:
 
         return covs
 
-    def _optimize_model_for_column(self, X: pd.DataFrame, col: str) -> dict:
+    def _is_same_type(self, lhs: str, rhs: str) -> bool:
+        ltype = lhs in self.categorical_cols
+        rtype = rhs in self.categorical_cols
+
+        return ltype == rtype
+
+    def _check_similar(self, X: pd.DataFrame, col: str) -> Any:
+        if not self.select_lazy:
+            return None
+
+        similar_cols = []
+        for ref_col in self.column_to_model:
+            if not self.select_model_by_column:
+                return copy.deepcopy(self.column_to_model[ref_col])
+
+            if not self._is_same_type(ref_col, col):
+                continue
+
+            arch = self.column_to_model[ref_col].name()
+
+            if arch in similar_cols:
+                return copy.deepcopy(self.column_to_model[ref_col])
+
+            similar_cols.append(self.column_to_model[ref_col].name())
+
+        return None
+
+    def _optimize_model_for_column(self, X: pd.DataFrame, col: str) -> float:
         # BO evaluation for a single column
         if self.mask[col].sum() == 0:
-            return self.column_to_model
+            return 0
+
+        similar_candidate = self._check_similar(X, col)
+        if similar_candidate is not None:
+            self.column_to_model[col] = similar_candidate
+            return 0
 
         cov_cols = self._get_neighbors_for_col(col)
         covs = X[cov_cols]
@@ -555,21 +652,27 @@ class IterativeErrorCorrection:
         if col in self.categorical_cols:
             y_train = y_train.astype(int)
 
-        candidate = self.column_to_optimizer[col].evaluate(X_train, y_train)
-
+        candidate, score = self.column_to_optimizer[col].evaluate(X_train, y_train)
         self.column_to_model[col] = candidate
+        self.perf_trace.setdefault(col, []).append(score)
+        self.model_trace.setdefault(col, []).append(candidate.name())
 
-        return self.column_to_model
+        return score
 
-    def _optimize(self, X: pd.DataFrame) -> dict:
+    def _optimize(self, X: pd.DataFrame) -> float:
         # BO evaluation to select the best models for each columns
+        if self.select_model_by_iteration:
+            self.column_to_model = {}
 
+        iteration_score: float = 0
         for col in self.imputation_order:
-            self._optimize_model_for_column(X, col)
+            iteration_score += self._optimize_model_for_column(X, col)
 
-        return self.column_to_model
+        return iteration_score
 
-    def _impute_single_column(self, X: pd.DataFrame, col: str) -> pd.DataFrame:
+    def _impute_single_column(
+        self, X: pd.DataFrame, col: str, train: bool
+    ) -> pd.DataFrame:
         # Run an iteration of imputation on a column
         if self.mask[col].sum() == 0:
             return X
@@ -589,9 +692,10 @@ class IterativeErrorCorrection:
             X[col][self.mask[col]] = np.asarray(y_train)[0]
             return X
 
-        est = copy.deepcopy(self.column_to_model[col])
+        est = self.column_to_model[col]
 
-        est.fit(X_train, y_train)
+        if train:
+            est.fit(X_train, y_train)
 
         X[col][self.mask[col]] = est.predict(covs[self.mask[col]]).values.squeeze()
 
@@ -599,6 +703,9 @@ class IterativeErrorCorrection:
         X[col][self.mask[col]] = np.clip(X[col][self.mask[col]], col_min, col_max)
 
         return X
+
+    def models(self) -> dict:
+        return self.column_to_model
 
     def _get_imputation_order(self) -> list:
         if self.imputation_order_strategy == "ascending":
@@ -608,14 +715,6 @@ class IterativeErrorCorrection:
         else:
             random.shuffle(self.imputation_order)
             return self.imputation_order
-
-    def _iterate_imputation(self, X: pd.DataFrame) -> pd.DataFrame:
-        # Run an iteration of imputation on all columns
-        cols = self._get_imputation_order()
-
-        for col in cols:
-            X = self._impute_single_column(X, col)
-        return X
 
     def _initial_imputation(self, X: pd.DataFrame) -> pd.DataFrame:
         # Use baseline imputer for initial values
@@ -633,7 +732,89 @@ class IterativeErrorCorrection:
             index=X.index,
         )
 
-    def fit_transform(self, X: pd.DataFrame) -> "IterativeErrorCorrection":
+    def _fit_transform_outer_optimization(self, X: pd.DataFrame) -> pd.DataFrame:
+        prev_obj_score = -10e10
+
+        log.info("  > HyperImpute using outer optimization")
+
+        for out_it in range(self.n_outer_iter):
+            log.info(f"  > BO iter {out_it}")
+
+            obj_score = self._optimize(X.copy())
+            if np.abs(obj_score - prev_obj_score) < OUTER_TOL:
+                log.info("     >>>> Early stopping on objective diff iteration")
+                break
+
+            prev_obj_score = obj_score
+            next_train = 0
+
+            for it in range(self.n_inner_iter):
+                if self.inner_loop_hook:
+                    self.inner_loop_hook(
+                        out_it * self.n_inner_iter + it, self._tear_down(X.copy())
+                    )
+
+                X_prev = X.copy()
+
+                train = it >= next_train
+                if train:
+                    next_train += self.train_step
+
+                cols = self._get_imputation_order()
+                for col in cols:
+                    X = self._impute_single_column(X.copy(), col, train)
+
+                inf_norm = np.linalg.norm(X - X_prev, ord=np.inf, axis=None)
+                if inf_norm < INNER_TOL and it > self.n_min_inner_iter:
+                    log.info(
+                        f"     >>>> Early stopping on imputation diff iteration : {it} err: {mean_squared_error(X_prev, X)}"
+                    )
+                    break
+
+        return X
+
+    def _fit_transform_inner_optimization(self, X: pd.DataFrame) -> pd.DataFrame:
+        log.info("  > HyperImpute using inner optimization")
+        best_obj_score = -10e10
+        patience = 0
+
+        for it in range(self.n_inner_iter):
+            log.info(f"  > Imputation iter {it}")
+            if self.select_model_by_iteration:
+                self.column_to_model = {}
+
+            obj_score: float = 0
+
+            if self.inner_loop_hook:
+                self.inner_loop_hook(it, self._tear_down(X.copy()))
+
+            X_prev = X.copy()
+
+            cols = self._get_imputation_order()
+            for col in cols:
+                obj_score += self._optimize_model_for_column(X, col)
+                X = self._impute_single_column(X.copy(), col, True)
+
+            inf_norm = np.linalg.norm(X - X_prev, ord=np.inf, axis=None)
+            if inf_norm < INNER_TOL and it > self.n_min_inner_iter:
+                log.info(
+                    f"     >>>> Early stopping on imputation diff iteration : {it} err: {mean_squared_error(X_prev, X)}"
+                )
+                break
+
+            if obj_score > best_obj_score:
+                best_obj_score = obj_score
+                patience = 0
+            else:
+                patience += 1
+
+            if patience > self.select_patience:
+                log.info("     >>>> Early stopping on objective diff iteration")
+                break
+
+        return X
+
+    def fit_transform(self, X: pd.DataFrame) -> pd.DataFrame:
         # Run imputation
         X = self._setup(X)
 
@@ -642,21 +823,10 @@ class IterativeErrorCorrection:
 
         Xt = Xt_init.copy()
 
-        for out_it in range(self.n_outer_iter):
-            log.info(f"  > BO iter {out_it}")
-
-            self._optimize(Xt.copy())
-
-            for it in range(self.n_inner_iter):
-                Xt_prev = Xt.copy()
-                Xt = self._iterate_imputation(Xt_prev.copy())
-
-                inf_norm = np.linalg.norm(Xt - Xt_prev, ord=np.inf, axis=None)
-                if inf_norm < TOL:
-                    log.info(
-                        f"     >>>> Early stopping on iteration diff {mean_squared_error(Xt_prev, Xt)}"
-                    )
-                    break
+        if self.outer_iteration_enabled:
+            Xt = self._fit_transform_outer_optimization(Xt)
+        else:
+            Xt = self._fit_transform_inner_optimization(Xt)
 
         return self._tear_down(Xt)
 
@@ -665,37 +835,71 @@ class HyperImputePlugin(base.ImputerPlugin):
     """HyperImpute strategy."""
 
     initial_strategy_vals = ["mean", "median", "most_frequent"]
-    imputation_order_vals = ["random", "ascending", "descending"]
+    imputation_order_vals = ["ascending", "descending", "random"]
 
     def __init__(
         self,
         classifier_seed: list = LARGE_DATA_CLF_SEEDS,
         regression_seed: list = LARGE_DATA_REG_SEEDS,
-        imputation_order: int = 0,  # imputation_order_vals
+        imputation_order: int = 2,  # imputation_order_vals
         baseline_imputer: int = 0,  # initial_strategy_vals
         optimizer: str = "simple",
-        class_threshold: int = 20,
+        class_threshold: int = 5,
         optimize_thresh: int = 1000,
         n_inner_iter: int = 50,
         n_outer_iter: int = 5,
+        train_step: int = 20,
         random_state: int = 0,
+        select_model_by_column: bool = True,
+        select_model_by_iteration: bool = True,
+        select_patience: int = 3,
+        select_lazy: bool = True,
+        inner_loop_hook: Optional[Callable] = None,
+        outer_iteration_enabled: bool = False,
     ) -> None:
         super().__init__()
 
         enable_reproducible_results(random_state)
+        self.classifier_seed = classifier_seed
+        self.regression_seed = regression_seed
+        self.imputation_order = imputation_order
+        self.baseline_imputer = baseline_imputer
+        self.optimizer = optimizer
+        self.class_threshold = class_threshold
+        self.optimize_thresh = optimize_thresh
+        self.n_inner_iter = n_inner_iter
+        self.n_outer_iter = n_outer_iter
+        self.train_step = train_step
+        self.random_state = random_state
+        self.select_model_by_column = select_model_by_column
+        self.select_model_by_iteration = select_model_by_iteration
+        self.select_patience = select_patience
+        self.select_lazy = select_lazy
+        self.inner_loop_hook = inner_loop_hook
+        self.outer_iteration_enabled = outer_iteration_enabled
+
         self.model = IterativeErrorCorrection(
             "hyperimpute_plugin",
-            classifier_seed=classifier_seed,
-            regression_seed=regression_seed,
-            optimizer=optimizer,
-            baseline_imputer=HyperImputePlugin.initial_strategy_vals[baseline_imputer],
-            imputation_order_strategy=HyperImputePlugin.imputation_order_vals[
-                imputation_order
+            classifier_seed=self.classifier_seed,
+            regression_seed=self.regression_seed,
+            optimizer=self.optimizer,
+            baseline_imputer=HyperImputePlugin.initial_strategy_vals[
+                self.baseline_imputer
             ],
-            class_threshold=class_threshold,
-            optimize_thresh=optimize_thresh,
-            n_inner_iter=n_inner_iter,
-            n_outer_iter=n_outer_iter,
+            imputation_order_strategy=HyperImputePlugin.imputation_order_vals[
+                self.imputation_order
+            ],
+            class_threshold=self.class_threshold,
+            optimize_thresh=self.optimize_thresh,
+            n_inner_iter=self.n_inner_iter,
+            n_outer_iter=self.n_outer_iter,
+            train_step=self.train_step,
+            select_model_by_column=self.select_model_by_column,
+            select_model_by_iteration=self.select_model_by_iteration,
+            select_patience=self.select_patience,
+            select_lazy=self.select_lazy,
+            inner_loop_hook=self.inner_loop_hook,
+            outer_iteration_enabled=self.outer_iteration_enabled,
         )
 
     @staticmethod
@@ -711,6 +915,15 @@ class HyperImputePlugin(base.ImputerPlugin):
 
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
         return self.model.fit_transform(X)
+
+    def models(self) -> dict:
+        return self.model.models()
+
+    def trace(self) -> dict:
+        return {
+            "objective": self.model.perf_trace,
+            "models": self.model.model_trace,
+        }
 
 
 plugin = HyperImputePlugin

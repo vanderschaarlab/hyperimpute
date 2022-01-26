@@ -269,14 +269,23 @@ class SoftImputePlugin(base.ImputerPlugin):
         3  2.000000e+00  2.000000e+00  2.000000e+00  2.000000e+00
     """
 
-    def __init__(self, model: Any = None, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        maxit: int = 1000,
+        convergence_threshold: float = 1e-5,
+        max_rank: int = 2,
+        shrink_lambda: float = 0,
+        cv_len: int = 3,
+    ) -> None:
         super().__init__()
 
-        if model:
-            self._model = model
-            return
+        self.maxit = maxit
+        self.convergence_threshold = convergence_threshold
+        self.max_rank = max_rank
+        self.shrink_lambda = shrink_lambda
+        self.cv_len = cv_len
 
-        self._model = SoftImpute(**kwargs)
+        self._model = SoftImpute()
 
     @staticmethod
     def name() -> str:

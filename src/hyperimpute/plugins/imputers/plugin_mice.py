@@ -56,13 +56,15 @@ class MicePlugin(base.ImputerPlugin):
         initial_strategy: int = 0,
         imputation_order: int = 0,
         random_state: Union[int, None] = 0,
-        model: Any = None,
     ) -> None:
         super().__init__()
 
-        if model:
-            self._models = model
-            return
+        self.n_imputations = n_imputations
+        self.max_iter = max_iter
+        self.tol = tol
+        self.initial_strategy = initial_strategy
+        self.imputation_order = imputation_order
+        self.random_state = random_state
 
         if not random_state:
             random_state = int(time.time())
