@@ -18,6 +18,9 @@ class MissForestPlugin(base.ImputerPlugin):
     Method:
         Iterative chained equations(ICE) methods model each feature with missing values as a function of other features in a round-robin fashion. For each step of the round-robin imputation, we use a ExtraTreesRegressor, which fits a number of randomized extra-trees and averages the results.
 
+    Paper: "MissForest—non-parametric missing value imputation for mixed-type data", Daniel J. Stekhoven, Peter Bühlmann
+
+
     Args:
         n_estimators: int, default=10
             The number of trees in the forest.
@@ -67,7 +70,6 @@ class MissForestPlugin(base.ImputerPlugin):
             baseline_imputer=initial_strategy,
             random_state=random_state,
             n_inner_iter=max_iter,
-            n_outer_iter=1,
             class_threshold=5,
         )
 

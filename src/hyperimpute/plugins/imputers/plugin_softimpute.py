@@ -22,8 +22,7 @@ class SoftImpute(TransformerMixin):
     """The SoftImpute algorithm fits a low-rank matrix approximation to a matrix with missing values via nuclear-norm regularization. The algorithm can be used to impute quantitative data.
     To calibrate the the nuclear-norm regularization parameter(shrink_lambda), we perform cross-validation(_cv_softimpute)
 
-    Original paper:
-        "Spectral Regularization Algorithms for Learning Large Incomplete Matrices", by Mazumder, Hastie, and Tibshirani.
+    Paper: "Spectral Regularization Algorithms for Learning Large Incomplete Matrices", by Mazumder, Hastie, and Tibshirani.
 
     Args:
         maxit: int, default=500

@@ -17,6 +17,8 @@ class IterativeChainedEquationsPlugin(base.ImputerPlugin):
     Method:
         Multivariate Iterative chained equations(MICE) methods model each feature with missing values as a function of other features in a round-robin fashion. For each step of the round-robin imputation, we use a BayesianRidge estimator, which does a regularized linear regression.
 
+    Paper: "mice: Multivariate Imputation by Chained Equations in R", Stef van Buuren, Karin Groothuis-Oudshoorn
+
     Args:
         max_iter: int, default=500
             maximum number of imputation rounds to perform.
@@ -59,7 +61,6 @@ class IterativeChainedEquationsPlugin(base.ImputerPlugin):
             baseline_imputer=initial_strategy,
             random_state=random_state,
             n_inner_iter=max_iter,
-            n_outer_iter=1,
             class_threshold=5,
         )
 

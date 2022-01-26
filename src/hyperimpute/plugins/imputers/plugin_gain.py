@@ -141,8 +141,8 @@ class GainImputation(TransformerMixin):
      - The generato imputes the missing components conditioned on what is actually observed, and outputs a completed vector.
      - The discriminator takes a completed vector and attempts to determine which components were actually observed and which were imputed.
 
-    Original Paper: J. Yoon, J. Jordon, M. van der Schaar, "GAIN: Missing Data Imputation using Generative Adversarial Nets," ICML, 2018.
-
+    Paper: J. Yoon, J. Jordon, M. van der Schaar, "GAIN: Missing Data Imputation using Generative Adversarial Nets," ICML, 2018.
+    Original code: https://github.com/jsyoon0823/GAIN
 
     Args:
         batch_size: int

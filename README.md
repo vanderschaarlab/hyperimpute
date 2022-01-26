@@ -9,9 +9,6 @@
 
 <div align="center">
 
- [![hyperimpute Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://github.com/vanderschaarlab/hyperimpute/blob/main/LICENSE)
-
 </div>
 
 Dataset imputation is the process of replacing missing data with substituted values.
@@ -150,14 +147,14 @@ compare_models(
  - [Tutorial 1: AutoML for imputation](tutorials/tutorial_01_bayesian_optimization_over_imputers.ipynb)
  - [Tutorial 2: HyperImpute example](tutorials/experiments_01_hyperimpute_with_naive_search.ipynb)
  - [Tutorial 3: HyperImpute with Hyperband](tutorials/experiments_01_hyperimpute_with_hyperband.ipynb)
- 
+
 ## :zap: Imputation methods
 The following table contains the default imputation plugins:
 
 | Strategy | Description| Code |
 |--- | --- | --- |
 |**HyperImpute**|Iterative imputer using both regression and classification methods based on linear models, trees, XGBoost, CatBoost and neural nets| [`plugin_hyperimpute.py`](src/hyperimpute/plugins/imputers/plugin_hyperimpute.py) |
-|**Mean**|Replace the missing values using the mean along each column with [`SimpleImputer`](https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html)| [`plugin_mean.py`](src/hyperimpute/plugins/imputers/plugin_mean.py) | 
+|**Mean**|Replace the missing values using the mean along each column with [`SimpleImputer`](https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html)| [`plugin_mean.py`](src/hyperimpute/plugins/imputers/plugin_mean.py) |
 |**Median**|Replace the missing values using the median along each column with [`SimpleImputer`](https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html) |  [`plugin_median.py`](src/hyperimpute/plugins/imputers/plugin_median.py) |
 |**Most-frequent**|Replace the missing values using the most frequent value along each column with [`SimpleImputer`](https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html)|[`plugin_most_freq.py`](src/hyperimpute/plugins/imputers/plugin_most_freq.py) |
 |**MissForest**|Iterative imputation method based on Random Forests using [`IterativeImputer`](https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html#sklearn.impute.IterativeImputer) and [`ExtraTreesRegressor`](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html)| [`plugin_missforest.py`](src/hyperimpute/plugins/imputers/plugin_missforest.py) |
@@ -171,7 +168,7 @@ The following table contains the default imputation plugins:
 |**MIWAE**|[`MIWAE: Deep Generative Modelling and Imputation of Incomplete Data`](https://arxiv.org/abs/1812.02633)|[`plugin_miwae.py`](src/hyperimpute/plugins/imputers/plugin_miwae.py) |
 
 
-## :hammer: Tests 
+## :hammer: Tests
 
 Install the testing dependencies using
 ```bash

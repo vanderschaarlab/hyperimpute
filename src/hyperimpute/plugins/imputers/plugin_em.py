@@ -30,6 +30,8 @@ class EM(TransformerMixin):
             maximum number of imputation rounds to perform.
         convergence_threshold : float, default=1e-08
             Minimum ration difference between iterations before stopping.
+
+    Paper: "Maximum Likelihood from Incomplete Data via the EM Algorithm", A. P. Dempster, N. M. Laird and D. B. Rubin
     """
 
     def __init__(self, maxit: int = 500, convergence_threshold: float = 1e-08) -> None:
