@@ -1,3 +1,8 @@
+#
+# Paper: "Missing Data Imputation using Optimal Transport", Boris Muzellec, Julie Josse, Claire Boyer, Marco Cuturi
+# Original code: https://github.com/BorisMuzellec/MissingDataOT
+#
+
 # stdlib
 from typing import Any, List
 

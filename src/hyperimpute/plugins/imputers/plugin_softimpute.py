@@ -1,3 +1,7 @@
+#
+# Paper: "Matrix Completion and Low-Rank SVD via Fast Alternating Least Squares", Trevor Hastie, Rahul Mazumder, Jason D. Lee, Reza Zadeh
+#
+
 # stdlib
 import json
 from typing import Any, List

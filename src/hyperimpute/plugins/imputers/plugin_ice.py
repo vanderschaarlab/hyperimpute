@@ -1,3 +1,7 @@
+#
+# Paper: "mice: Multivariate Imputation by Chained Equations in R", Stef van Buuren, Karin Groothuis-Oudshoorn
+#
+
 # stdlib
 import time
 from typing import Any, List, Union

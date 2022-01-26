@@ -1,3 +1,7 @@
+#
+# Paper: "MIRACLE: Causally-Aware Imputation via Learning Missing Data Mechanisms", Trent Kyono, Yao Zhang, Alexis Bellot, Mihaela van der Schaar
+#
+
 # stdlib
 from typing import Any, List
 

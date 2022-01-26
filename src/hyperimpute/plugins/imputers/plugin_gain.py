@@ -1,3 +1,8 @@
+#
+# Paper: "GAIN: Missing Data Imputation using Generative Adversarial Nets", Jinsung Yoon, James Jordon, Mihaela van der Schaar
+# Original code: https://github.com/jsyoon0823/GAIN
+#
+
 # stdlib
 from typing import Any, List, Tuple, Union
 

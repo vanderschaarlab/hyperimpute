@@ -1,3 +1,7 @@
+#
+# Paper: "Maximum Likelihood from Incomplete Data via the EM Algorithm", A. P. Dempster, N. M. Laird and D. B. Rubin
+#
+
 # stdlib
 from functools import reduce
 from typing import Any, List, Tuple

@@ -1,3 +1,8 @@
+#
+# Paper: "MIWAE: Deep Generative Modelling and Imputation of Incomplete Data", Pierre-Alexandre Mattei, Jes Frellsen
+# Original code: https://github.com/pamattei/miwae
+#
+
 # stdlib
 from typing import Any, List
 
