@@ -62,11 +62,6 @@ def _eval_imputer_pipeline(test_imputer: str) -> None:
     assert score_with_miss < score_with_impute
 
 
-@pytest.mark.parametrize("test_imputer", ["hyperimpute", "mean", "median"])
-def test_sklearn_imputation_pipeline_baseline(test_imputer: str) -> None:
-    return _eval_imputer_pipeline(test_imputer)
-
-
 @pytest.mark.slow
 @pytest.mark.parametrize("test_imputer", Imputers().list())
 def test_sklearn_imputation_pipeline_full(test_imputer: str) -> None:

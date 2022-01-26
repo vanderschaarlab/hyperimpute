@@ -61,7 +61,6 @@ class IterativeChainedEquationsPlugin(base.ImputerPlugin):
             baseline_imputer=initial_strategy,
             random_state=random_state,
             n_inner_iter=max_iter,
-            n_outer_iter=1,
             class_threshold=5,
         )
 

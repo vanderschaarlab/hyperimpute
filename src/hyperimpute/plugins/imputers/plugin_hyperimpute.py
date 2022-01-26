@@ -451,14 +451,11 @@ class IterativeErrorCorrection:
         imputation_order_strategy: str = "ascending",
         n_inner_iter: int = 50,
         n_min_inner_iter: int = 10,
-        n_outer_iter: int = 5,
-        train_step: int = 10,
         select_model_by_column: bool = True,
         select_model_by_iteration: bool = True,
         select_patience: int = 3,
         select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
-        outer_iteration_enabled: bool = False,
     ):
         if optimizer not in [
             "hyperband",
@@ -484,14 +481,11 @@ class IterativeErrorCorrection:
         self.optimize_thresh = optimize_thresh
         self.optimize_thresh_upper = optimize_thresh_upper
         self.n_inner_iter = n_inner_iter
-        self.n_outer_iter = n_outer_iter
         self.n_min_inner_iter = n_min_inner_iter
         self.classifier_seed = classifier_seed
         self.regression_seed = regression_seed
         self.imputation_order_strategy = imputation_order_strategy
-        self.train_step = train_step
         self.inner_loop_hook = inner_loop_hook
-        self.outer_iteration_enabled = outer_iteration_enabled
 
         self.optimizer: Any
         if optimizer == "hyperband":
@@ -732,47 +726,6 @@ class IterativeErrorCorrection:
             index=X.index,
         )
 
-    def _fit_transform_outer_optimization(self, X: pd.DataFrame) -> pd.DataFrame:
-        prev_obj_score = -10e10
-
-        log.info("  > HyperImpute using outer optimization")
-
-        for out_it in range(self.n_outer_iter):
-            log.info(f"  > BO iter {out_it}")
-
-            obj_score = self._optimize(X.copy())
-            if np.abs(obj_score - prev_obj_score) < OUTER_TOL:
-                log.info("     >>>> Early stopping on objective diff iteration")
-                break
-
-            prev_obj_score = obj_score
-            next_train = 0
-
-            for it in range(self.n_inner_iter):
-                if self.inner_loop_hook:
-                    self.inner_loop_hook(
-                        out_it * self.n_inner_iter + it, self._tear_down(X.copy())
-                    )
-
-                X_prev = X.copy()
-
-                train = it >= next_train
-                if train:
-                    next_train += self.train_step
-
-                cols = self._get_imputation_order()
-                for col in cols:
-                    X = self._impute_single_column(X.copy(), col, train)
-
-                inf_norm = np.linalg.norm(X - X_prev, ord=np.inf, axis=None)
-                if inf_norm < INNER_TOL and it > self.n_min_inner_iter:
-                    log.info(
-                        f"     >>>> Early stopping on imputation diff iteration : {it} err: {mean_squared_error(X_prev, X)}"
-                    )
-                    break
-
-        return X
-
     def _fit_transform_inner_optimization(self, X: pd.DataFrame) -> pd.DataFrame:
         log.info("  > HyperImpute using inner optimization")
         best_obj_score = -10e10
@@ -823,16 +776,32 @@ class IterativeErrorCorrection:
 
         Xt = Xt_init.copy()
 
-        if self.outer_iteration_enabled:
-            Xt = self._fit_transform_outer_optimization(Xt)
-        else:
-            Xt = self._fit_transform_inner_optimization(Xt)
+        Xt = self._fit_transform_inner_optimization(Xt)
 
         return self._tear_down(Xt)
 
 
 class HyperImputePlugin(base.ImputerPlugin):
-    """HyperImpute strategy."""
+    """HyperImpute strategy.
+
+    Paper: "HyperImpute: Generalized Iterative Imputation with Automatic Model Selection"
+
+
+    Args:
+        classifier_seed: list. List of ClassifierPlugin names for the search pool.
+        regression_seed: list. List of RegressionPlugin names for the search pool.
+        imputation_order: int. 0 - ascending, 1 - descending, 2 - random
+        baseline_imputer: int. 0 - mean, 1 - median, 2- most_frequent
+        optimizer: str. Options: simple, hyperband, bayesian
+        class_threshold: int. Maximum number of unique items in a categorical column.
+        optimize_thresh: int. The number of subsamples used for the model search.
+        n_inner_iter: int. number of imputation iterations.
+        random_state: int. random seed.
+        select_model_by_column: bool. If False, reuse the first model selected in the current iteration for all columns. Else, search the model for each column.
+        select_model_by_iteration: bool. If False, reuse the models selected in the first iteration. Otherwise, refresh the models on each iteration.
+        select_lazy: bool. If True, if there is a trend towards a certain model architecture, the loop reuses than for all columns, instead of calling the optimizer.
+        inner_loop_hook: Callable. Debug hook, called before each iteration.
+    """
 
     initial_strategy_vals = ["mean", "median", "most_frequent"]
     imputation_order_vals = ["ascending", "descending", "random"]
@@ -843,19 +812,16 @@ class HyperImputePlugin(base.ImputerPlugin):
         regression_seed: list = LARGE_DATA_REG_SEEDS,
         imputation_order: int = 2,  # imputation_order_vals
         baseline_imputer: int = 0,  # initial_strategy_vals
-        optimizer: str = "simple",
+        optimizer: str = "hyperband",
         class_threshold: int = 5,
         optimize_thresh: int = 1000,
         n_inner_iter: int = 50,
-        n_outer_iter: int = 5,
-        train_step: int = 20,
         random_state: int = 0,
         select_model_by_column: bool = True,
         select_model_by_iteration: bool = True,
         select_patience: int = 3,
         select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
-        outer_iteration_enabled: bool = False,
     ) -> None:
         super().__init__()
 
@@ -868,15 +834,12 @@ class HyperImputePlugin(base.ImputerPlugin):
         self.class_threshold = class_threshold
         self.optimize_thresh = optimize_thresh
         self.n_inner_iter = n_inner_iter
-        self.n_outer_iter = n_outer_iter
-        self.train_step = train_step
         self.random_state = random_state
         self.select_model_by_column = select_model_by_column
         self.select_model_by_iteration = select_model_by_iteration
         self.select_patience = select_patience
         self.select_lazy = select_lazy
         self.inner_loop_hook = inner_loop_hook
-        self.outer_iteration_enabled = outer_iteration_enabled
 
         self.model = IterativeErrorCorrection(
             "hyperimpute_plugin",
@@ -892,14 +855,11 @@ class HyperImputePlugin(base.ImputerPlugin):
             class_threshold=self.class_threshold,
             optimize_thresh=self.optimize_thresh,
             n_inner_iter=self.n_inner_iter,
-            n_outer_iter=self.n_outer_iter,
-            train_step=self.train_step,
             select_model_by_column=self.select_model_by_column,
             select_model_by_iteration=self.select_model_by_iteration,
             select_patience=self.select_patience,
             select_lazy=self.select_lazy,
             inner_loop_hook=self.inner_loop_hook,
-            outer_iteration_enabled=self.outer_iteration_enabled,
         )
 
     @staticmethod

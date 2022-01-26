@@ -57,9 +57,6 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
             self.model = model
             return
 
-        if hyperparam_search_iterations:
-            max_iter = int(hyperparam_search_iterations) * 100
-
         self.model = LogisticRegression(
             C=C,
             solver=LogisticRegressionPlugin.solvers[solver],
@@ -77,7 +74,6 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
     @staticmethod
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
         return [
-            params.Integer("max_iter", 1000, 10000),
             params.Float("C", 1e-3, 1e-2),
             params.Integer("solver", 0, len(LogisticRegressionPlugin.solvers) - 1),
             params.Integer("multi_class", 0, len(LogisticRegressionPlugin.classes) - 1),
