@@ -1,7 +1,3 @@
-#
-# Paper: "mice: Multivariate Imputation by Chained Equations in R", Stef van Buuren, Karin Groothuis-Oudshoorn
-#
-
 # stdlib
 import time
 from typing import Any, List, Union
@@ -20,6 +16,8 @@ class IterativeChainedEquationsPlugin(base.ImputerPlugin):
 
     Method:
         Multivariate Iterative chained equations(MICE) methods model each feature with missing values as a function of other features in a round-robin fashion. For each step of the round-robin imputation, we use a BayesianRidge estimator, which does a regularized linear regression.
+
+    Paper: "mice: Multivariate Imputation by Chained Equations in R", Stef van Buuren, Karin Groothuis-Oudshoorn
 
     Args:
         max_iter: int, default=500

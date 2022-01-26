@@ -1,8 +1,3 @@
-#
-# Paper: "MIWAE: Deep Generative Modelling and Imputation of Incomplete Data", Pierre-Alexandre Mattei, Jes Frellsen
-# Original code: https://github.com/pamattei/miwae
-#
-
 # stdlib
 from typing import Any, List
 
@@ -27,6 +22,12 @@ def weights_init(layer: Any) -> None:
 
 
 class MIWAEPlugin(base.ImputerPlugin):
+    """MIWAE imputation plugin
+
+    Paper: "MIWAE: Deep Generative Modelling and Imputation of Incomplete Data", Pierre-Alexandre Mattei, Jes Frellsen
+    Original code: https://github.com/pamattei/miwae
+    """
+
     def __init__(
         self,
         n_epochs: int = 500,

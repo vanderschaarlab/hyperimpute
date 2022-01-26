@@ -1,8 +1,3 @@
-#
-# Paper: "Missing Data Imputation using Optimal Transport", Boris Muzellec, Julie Josse, Claire Boyer, Marco Cuturi
-# Original code: https://github.com/BorisMuzellec/MissingDataOT
-#
-
 # stdlib
 from typing import Any, List
 
@@ -24,7 +19,8 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class SinkhornImputation(TransformerMixin):
     """Sinkhorn imputation can be used to impute quantitative data and it relies on the idea that two batches extracted randomly from the same dataset should share the same distribution and consists in minimizing optimal transport distances between batches.
 
-    Original paper: "Missing Data Imputation using Optimal Transport", Boris Muzellec, Julie Josse, Claire Boyer, Marco Cuturi
+    Paper: "Missing Data Imputation using Optimal Transport", Boris Muzellec, Julie Josse, Claire Boyer, Marco Cuturi
+    Original code: https://github.com/BorisMuzellec/MissingDataOT
 
 
     Args:

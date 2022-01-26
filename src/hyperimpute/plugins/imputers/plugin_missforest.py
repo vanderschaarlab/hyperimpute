@@ -1,7 +1,3 @@
-#
-# Paper: "MissForest—non-parametric missing value imputation for mixed-type data", Daniel J. Stekhoven, Peter Bühlmann
-#
-
 # stdlib
 import time
 from typing import Any, List, Union
@@ -21,6 +17,9 @@ class MissForestPlugin(base.ImputerPlugin):
 
     Method:
         Iterative chained equations(ICE) methods model each feature with missing values as a function of other features in a round-robin fashion. For each step of the round-robin imputation, we use a ExtraTreesRegressor, which fits a number of randomized extra-trees and averages the results.
+
+    Paper: "MissForest—non-parametric missing value imputation for mixed-type data", Daniel J. Stekhoven, Peter Bühlmann
+
 
     Args:
         n_estimators: int, default=10
