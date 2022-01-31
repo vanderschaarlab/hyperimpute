@@ -823,7 +823,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         regression_seed: list = LARGE_DATA_REG_SEEDS,
         imputation_order: int = 2,  # imputation_order_vals
         baseline_imputer: int = 0,  # initial_strategy_vals
-        optimizer: str = "hyperband",
+        optimizer: str = "simple",
         class_threshold: int = 5,
         optimize_thresh: int = 1000,
         n_inner_iter: int = 50,

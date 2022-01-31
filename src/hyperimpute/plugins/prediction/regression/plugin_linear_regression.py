@@ -26,7 +26,7 @@ class LinearRegressionPlugin(base.RegressionPlugin):
     def __init__(
         self,
         solver: int = 0,
-        max_iter: Optional[int] = 100,
+        max_iter: Optional[int] = 10000,
         tol: float = 1e-3,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
