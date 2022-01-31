@@ -46,9 +46,7 @@ class Invalid:
 
 
 def test_load(ctx: Imputers) -> None:
-    assert len(ctx._plugins) == 0
-    ctx.get("mean")
-    assert len(ctx._plugins) == 1
+    assert len(ctx) > 0
 
 
 def test_list(ctx: Imputers) -> None:

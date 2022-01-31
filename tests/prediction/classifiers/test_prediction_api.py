@@ -52,9 +52,7 @@ class Invalid:
 
 
 def test_load(ctx: Predictions) -> None:
-    assert len(ctx._plugins) == 0
-    ctx.get("catboost")
-    assert len(ctx._plugins) == 1
+    assert len(ctx) > 0
 
 
 def test_list(ctx: Predictions) -> None:

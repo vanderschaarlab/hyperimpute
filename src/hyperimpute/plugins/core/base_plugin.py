@@ -179,7 +179,8 @@ class PluginLoader:
         self.add(cls.name(), cls)
 
     def list(self) -> List[str]:
-        return list(self._available_plugins.keys())
+        all_plugins = list(self._plugins.keys()) + list(self._available_plugins.keys())
+        return list(set(all_plugins))
 
     def types(self) -> List[Type]:
         return list(self._plugins.values())
