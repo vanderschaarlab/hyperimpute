@@ -2,18 +2,27 @@
 from typing import Any, List
 
 # third party
-from geomloss import SamplesLoss
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin
-import torch
 
 # hyperimpute absolute
+from hyperimpute.plugins.core.device import DEVICE
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
 import hyperimpute.plugins.utils.decorators as decorators
+from hyperimpute.utils.pip import install
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+for retry in range(2):
+    try:
+        # third party
+        from geomloss import SamplesLoss
+        import torch
+
+        break
+    except ImportError:
+        depends = ["geomloss", "torch"]
+        install(depends)
 
 
 class SinkhornImputation(TransformerMixin):
