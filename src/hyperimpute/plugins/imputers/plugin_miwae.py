@@ -4,14 +4,26 @@ from typing import Any, List
 # third party
 import numpy as np
 import pandas as pd
-import torch
-from torch import nn, optim
-import torch.distributions as td
 
 # hyperimpute absolute
 import hyperimpute.logger as log
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
+from hyperimpute.utils.pip import install
+
+for retry in range(2):
+    try:
+        # Necessary packages
+        # third party
+        import torch
+        from torch import nn, optim
+        import torch.distributions as td
+
+        break
+    except ImportError:
+        depends = ["torch"]
+        install(depends)
+
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -165,7 +177,8 @@ class MIWAEPlugin(base.ImputerPlugin):
         mask = np.isfinite(X.cpu()).bool().to(DEVICE)
 
         xhat_0 = torch.clone(X)
-        xhat_0[np.isnan(X.cpu())] = 0
+
+        xhat_0[np.isnan(X.cpu()).bool()] = 0
 
         n = X.shape[0]  # number of observations
         p = X.shape[1]  # number of features
@@ -260,7 +273,7 @@ class MIWAEPlugin(base.ImputerPlugin):
         mask = np.isfinite(X.cpu()).bool().to(DEVICE)
 
         xhat = torch.clone(X)
-        xhat[np.isnan(X.cpu())] = 0
+        xhat[np.isnan(X.cpu()).bool()] = 0
 
         xhat[~mask] = self._miwae_impute(
             iota_x=xhat,

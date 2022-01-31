@@ -3,6 +3,7 @@ import multiprocessing
 from typing import Any, List, Optional
 
 # third party
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 
@@ -85,7 +86,13 @@ class RandomForestPlugin(base.ClassifierPlugin):
         ]
 
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "RandomForestPlugin":
-        self.model.fit(X, *args, **kwargs)
+        if len(args) < 1:
+            raise RuntimeError("please provide y for the fit method")
+
+        X = np.asarray(X)
+        y = np.asarray(args[0]).ravel()
+
+        self.model.fit(X, y)
         return self
 
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
