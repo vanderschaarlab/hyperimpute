@@ -19,7 +19,7 @@ for retry in range(2):
 
         break
     except ImportError:
-        depends = ["miracle"]
+        depends = ["miracle-imputation"]
         install(depends)
 
 
