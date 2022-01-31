@@ -21,7 +21,7 @@ def dataset() -> Tuple[np.ndarray, np.ndarray]:
     return X, y
 
 
-@pytest.mark.parametrize("plugin", Predictions().list_available())
+@pytest.mark.parametrize("plugin", Predictions().list())
 def test_pickle(plugin: str) -> None:
     X, y = dataset()
 

@@ -63,6 +63,6 @@ def _eval_imputer_pipeline(test_imputer: str) -> None:
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("test_imputer", Imputers().list_available())
+@pytest.mark.parametrize("test_imputer", Imputers().list())
 def test_sklearn_imputation_pipeline_full(test_imputer: str) -> None:
     return _eval_imputer_pipeline(test_imputer)

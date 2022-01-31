@@ -30,7 +30,7 @@ def dataset(mechanism: str, p_miss: float) -> Tuple[np.ndarray, np.ndarray, np.n
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("plugin", Imputers().list_available())
+@pytest.mark.parametrize("plugin", Imputers().list())
 def test_pickle(plugin: str) -> None:
     x, x_miss, mask = dataset("MAR", 0.3)
 

@@ -20,9 +20,6 @@ class Predictions:
     def list(self) -> List[str]:
         return self._plugins.list()
 
-    def list_available(self) -> List[str]:
-        return self._plugins.list_available()
-
     def add(self, name: str, cls: Type) -> "Predictions":
         self._plugins.add(name, cls)
 
