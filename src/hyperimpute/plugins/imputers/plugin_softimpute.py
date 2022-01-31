@@ -146,7 +146,7 @@ class SoftImpute(TransformerMixin):
             X_reconstructed: new candidate for the result.
         """
         if self.max_rank:
-            U, s, V = randomized_svd(X, n_components=self.max_rank)
+            U, s, V = randomized_svd(X, n_components=self.max_rank, random_state=0)
         else:
             U, s, V = np.linalg.svd(X, compute_uv=True, full_matrices=False)
         s_thresh = np.maximum(s - shrink_val, 0)
@@ -205,7 +205,7 @@ class SoftImpute(TransformerMixin):
 
         # svd on x0
         if self.max_rank:
-            _, s, _ = randomized_svd(X0, self.max_rank)
+            _, s, _ = randomized_svd(X0, self.max_rank, random_state=0)
         else:
             s = np.linalg.svd(X0, compute_uv=False, full_matrices=False)
 

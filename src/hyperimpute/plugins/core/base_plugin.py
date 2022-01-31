@@ -1,12 +1,17 @@
 # stdlib
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, List
+from importlib.abc import Loader
+import importlib.util
+from os.path import basename
+from pathlib import Path
+from typing import Any, Dict, Generator, List, Type
 
 # third party
 from optuna.trial import Trial
 import pandas as pd
 
 # hyperimpute absolute
+import hyperimpute.logger as log
 import hyperimpute.plugins.utils.cast as cast
 
 # hyperimpute relative
@@ -134,3 +139,101 @@ class Plugin(metaclass=ABCMeta):
     @abstractmethod
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         ...
+
+
+class PluginLoader:
+    def __init__(self, plugins: list, expected_type: Type) -> None:
+        self._plugins: Dict[str, Type] = {}
+        self._available_plugins = {}
+        for plugin in plugins:
+            stem = Path(plugin).stem.split("plugin_")[-1]
+            self._available_plugins[stem] = plugin
+
+        self._expected_type = expected_type
+
+    def _load_single_plugin(self, plugin: str) -> None:
+        name = basename(plugin)
+        failed = False
+        for retry in range(2):
+            try:
+                spec = importlib.util.spec_from_file_location(name, plugin)
+                if not isinstance(spec.loader, Loader):
+                    raise RuntimeError("invalid plugin type")
+
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+
+                cls = mod.plugin  # type: ignore
+                failed = False
+                break
+            except BaseException as e:
+                log.critical(f"load failed: {e}")
+                failed = True
+                break
+
+        if failed:
+            log.critical(f"module {name} load failed")
+            return
+
+        log.debug(f"Loaded plugin {cls.type()} - {cls.name()}")
+        self.add(cls.name(), cls)
+
+    def list(self) -> List[str]:
+        return list(self._plugins.keys())
+
+    def list_available(self) -> List[str]:
+        return list(self._available_plugins.keys())
+
+    def types(self) -> List[Type]:
+        return list(self._plugins.values())
+
+    def add(self, name: str, cls: Type) -> "PluginLoader":
+        if name in self._plugins:
+            raise ValueError(f"Plugin {name} already exists.")
+
+        if not issubclass(cls, self._expected_type):
+            raise ValueError(
+                f"Plugin {name} must derive the {self._expected_type} interface."
+            )
+
+        self._plugins[name] = cls
+
+        return self
+
+    def get(self, name: str, *args: Any, **kwargs: Any) -> Any:
+        if name not in self._plugins and name not in self._available_plugins:
+            raise ValueError(f"Plugin {name} doesn't exist.")
+
+        if name not in self._plugins:
+            self._load_single_plugin(self._available_plugins[name])
+
+        if name not in self._plugins:
+            raise ValueError(f"Plugin {name} cannot be loaded.")
+
+        return self._plugins[name](*args, **kwargs)
+
+    def get_type(self, name: str) -> Type:
+        if name not in self._plugins and name not in self._available_plugins:
+            raise ValueError(f"Plugin {name} doesn't exist.")
+
+        if name not in self._plugins:
+            self._load_single_plugin(self._available_plugins[name])
+
+        if name not in self._plugins:
+            raise ValueError(f"Plugin {name} doesn't exist.")
+
+        return self._plugins[name]
+
+    def __iter__(self) -> Generator:
+        for x in self._plugins:
+            yield x
+
+    def __len__(self) -> int:
+        return len(self.list())
+
+    def __getitem__(self, key: str) -> Any:
+        return self.get(key)
+
+    def reload(self) -> "PluginLoader":
+        self._plugins = {}
+        return self

@@ -177,7 +177,8 @@ class MIWAEPlugin(base.ImputerPlugin):
         mask = np.isfinite(X.cpu()).bool().to(DEVICE)
 
         xhat_0 = torch.clone(X)
-        xhat_0[np.isnan(X.cpu())] = 0
+
+        xhat_0[np.isnan(X.cpu()).bool()] = 0
 
         n = X.shape[0]  # number of observations
         p = X.shape[1]  # number of features
@@ -272,7 +273,7 @@ class MIWAEPlugin(base.ImputerPlugin):
         mask = np.isfinite(X.cpu()).bool().to(DEVICE)
 
         xhat = torch.clone(X)
-        xhat[np.isnan(X.cpu())] = 0
+        xhat[np.isnan(X.cpu()).bool()] = 0
 
         xhat[~mask] = self._miwae_impute(
             iota_x=xhat,

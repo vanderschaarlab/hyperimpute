@@ -5,7 +5,7 @@ import pytest
 
 # hyperimpute absolute
 from hyperimpute.plugins.imputers import ImputerPlugin, Imputers
-from hyperimpute.plugins.imputers.plugin_most_freq import plugin
+from hyperimpute.plugins.imputers.plugin_most_frequent import plugin
 from hyperimpute.utils.serialization import load_model, save_model
 
 
