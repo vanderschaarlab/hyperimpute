@@ -1,6 +1,6 @@
-<h3 align="center">
+<h2 align="center">
   hyperimpute
-</h3>
+</h2>
 
 <h4 align="center">
     A library for NaNs and nulls
