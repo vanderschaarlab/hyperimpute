@@ -7,6 +7,7 @@
 </h4>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![hyperimpute Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
 
 <div align="center">
 
