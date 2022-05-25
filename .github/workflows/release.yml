@@ -3,8 +3,8 @@ name: HyperImpute Package release
 on:
   release:
     types: [created]
-  pull_request:
-    types: [opened, synchronize, reopened]
+    #pull_request:
+    #types: [opened, synchronize, reopened]
 
 
 jobs:
