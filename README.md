@@ -24,7 +24,11 @@ hyperimpute features:
 
 ## :rocket: Installation
 
-The library can be installed using
+The library can be installed from PyPI using
+```bash
+$ pip install hyperimpute
+```
+or from source, using
 ```bash
 $ pip install .
 ```
