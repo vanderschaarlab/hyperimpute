@@ -25,7 +25,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install .[testing]
+        run: |
+            pip install torch
+            pip install .[testing]
       - name: pre-commit validation
         run: pre-commit run --files src/*
       - name: Security checks
@@ -53,6 +55,7 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
       - name: Install dependencies
         run: |
+            pip install torch
             pip install .
             pip install .[testing]
       - name: Test with pytest
