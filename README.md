@@ -8,6 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![hyperimpute Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
+[![CodeQL](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml)
 
 <div align="center">
 
