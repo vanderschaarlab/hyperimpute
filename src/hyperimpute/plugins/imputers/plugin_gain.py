@@ -5,26 +5,14 @@ from typing import Any, List, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin
+import torch
+from torch import nn
 
 # hyperimpute absolute
 import hyperimpute.logger as log
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
 import hyperimpute.plugins.utils.decorators as decorators
-from hyperimpute.utils.pip import install
-
-for retry in range(2):
-    try:
-        # Necessary packages
-        # third party
-        import torch
-        from torch import nn
-
-        break
-    except ImportError:
-        depends = ["torch"]
-        install(depends)
-
 
 EPS = 1e-8
 

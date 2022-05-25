@@ -2,6 +2,7 @@
 from typing import Any, List
 
 # third party
+from miracle import MIRACLE
 import numpy as np
 import pandas as pd
 
@@ -10,17 +11,6 @@ import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
 from hyperimpute.plugins.imputers.plugin_mean import MeanPlugin
 from hyperimpute.plugins.imputers.plugin_median import MedianPlugin
-from hyperimpute.utils.pip import install
-
-for retry in range(2):
-    try:
-        # third party
-        from miracle import MIRACLE
-
-        break
-    except ImportError:
-        depends = ["miracle-imputation"]
-        install(depends)
 
 
 class MiraclePlugin(base.ImputerPlugin):

@@ -4,26 +4,14 @@ from typing import Any, List
 # third party
 import numpy as np
 import pandas as pd
+import torch
+from torch import nn, optim
+import torch.distributions as td
 
 # hyperimpute absolute
 import hyperimpute.logger as log
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
-from hyperimpute.utils.pip import install
-
-for retry in range(2):
-    try:
-        # Necessary packages
-        # third party
-        import torch
-        from torch import nn, optim
-        import torch.distributions as td
-
-        break
-    except ImportError:
-        depends = ["torch"]
-        install(depends)
-
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

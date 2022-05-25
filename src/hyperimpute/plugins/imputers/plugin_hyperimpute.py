@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.impute import MissingIndicator
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import LabelEncoder
+import torch
 
 # hyperimpute absolute
 import hyperimpute.logger as log
@@ -21,19 +22,7 @@ import hyperimpute.plugins.imputers.base as base
 from hyperimpute.plugins.prediction import PredictionPlugin, Predictions
 from hyperimpute.utils.distributions import enable_reproducible_results
 from hyperimpute.utils.optimizer import EarlyStoppingExceeded, create_study
-from hyperimpute.utils.pip import install
 from hyperimpute.utils.tester import evaluate_estimator, evaluate_regression
-
-for retry in range(2):
-    try:
-        # Necessary packages
-        # third party
-        import torch
-
-        break
-    except ImportError:
-        depends = ["torch"]
-        install(depends)
 
 INNER_TOL = 1e-8
 OUTER_TOL = 1e-3
@@ -189,7 +178,7 @@ class HyperbandOptimizer:
         for s in reversed(range(self.s_max + 1)):
 
             # initial number of configurations
-            n = int(math.ceil(self.B / self.max_iter / (s + 1) * self.eta ** s))
+            n = int(math.ceil(self.B / self.max_iter / (s + 1) * self.eta**s))
 
             # initial number of iterations per config
             r = self.max_iter * self.eta ** (-s)
