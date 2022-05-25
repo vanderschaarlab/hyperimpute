@@ -48,7 +48,7 @@ class LinearRegressionPlugin(base.RegressionPlugin):
     @staticmethod
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
         return [
-            params.Categorical("max_iter", [100, 10e3, 10e4]),
+            params.Categorical("max_iter", [100, 1000, 10000]),
             params.Integer("solver", 0, len(LinearRegressionPlugin.solvers) - 1),
         ]
 

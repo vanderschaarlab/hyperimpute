@@ -2,27 +2,17 @@
 from typing import Any, List
 
 # third party
+from geomloss import SamplesLoss
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin
+import torch
 
 # hyperimpute absolute
 from hyperimpute.plugins.core.device import DEVICE
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
 import hyperimpute.plugins.utils.decorators as decorators
-from hyperimpute.utils.pip import install
-
-for retry in range(2):
-    try:
-        # third party
-        from geomloss import SamplesLoss
-        import torch
-
-        break
-    except ImportError:
-        depends = ["geomloss", "torch"]
-        install(depends)
 
 
 class SinkhornImputation(TransformerMixin):
@@ -87,7 +77,7 @@ class SinkhornImputation(TransformerMixin):
 
         if self.batch_size > n // 2:
             e = int(np.log2(n // 2))
-            self.batch_size = 2 ** e
+            self.batch_size = 2**e
 
         mask = torch.isnan(X).double().cpu()
         imps = (self.noise * torch.randn(mask.shape).double() + np.nanmean(X.cpu(), 0))[

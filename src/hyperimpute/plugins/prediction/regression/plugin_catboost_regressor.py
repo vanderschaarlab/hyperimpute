@@ -2,24 +2,13 @@
 from typing import Any, List, Optional
 
 # third party
+from catboost import CatBoostRegressor
 import pandas as pd
 
 # hyperimpute absolute
 from hyperimpute.plugins.core.device import DEVICE
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.regression.base as base
-from hyperimpute.utils.pip import install
-
-for retry in range(2):
-    try:
-        # Necessary packages
-        # third party
-        from catboost import CatBoostRegressor
-
-        break
-    except ImportError:
-        depends = ["catboost"]
-        install(depends)
 
 
 class CatBoostRegressorPlugin(base.RegressionPlugin):

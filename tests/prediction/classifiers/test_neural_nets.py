@@ -70,6 +70,7 @@ def test_param_search() -> None:
     def evaluate_args(**kwargs: Any) -> float:
         kwargs["n_layers_hidden"] = 1
         kwargs["n_units_hidden"] = 2
+        kwargs["n_iter"] = 10
         model = plugin(**kwargs)
         metrics = evaluate_estimator(model, X, y)
 

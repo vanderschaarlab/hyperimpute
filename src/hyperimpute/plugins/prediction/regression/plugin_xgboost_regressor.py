@@ -4,23 +4,12 @@ from typing import Any, List, Optional
 
 # third party
 import pandas as pd
+from xgboost import XGBRegressor
 
 # hyperimpute absolute
 from hyperimpute.plugins.core.device import DEVICE
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.regression.base as base
-from hyperimpute.utils.pip import install
-
-for retry in range(2):
-    try:
-        # Necessary packages
-        # third party
-        from xgboost import XGBRegressor
-
-        break
-    except ImportError:
-        depends = ["xgboost"]
-        install(depends)
 
 
 class XGBoostRegressorPlugin(base.RegressionPlugin):
