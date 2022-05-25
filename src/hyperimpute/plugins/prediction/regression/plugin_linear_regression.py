@@ -29,6 +29,7 @@ class LinearRegressionPlugin(base.RegressionPlugin):
         max_iter: Optional[int] = 10000,
         tol: float = 1e-3,
         hyperparam_search_iterations: Optional[int] = None,
+        random_seed: int = 0,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)

@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import hyperimpute.logger as log
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.regression.base as base
+from hyperimpute.utils.distributions import enable_reproducible_results
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -72,7 +73,7 @@ class BasicNet(nn.Module):
         n_iter: int = 300,
         batch_size: int = 1024,
         n_iter_print: int = 10,
-        seed: int = 0,
+        random_seed: int = 0,
         patience: int = 10,
         n_iter_min: int = 100,
         dropout: float = 0.1,
@@ -128,7 +129,6 @@ class BasicNet(nn.Module):
         self.n_iter = n_iter
         self.batch_size = batch_size
         self.n_iter_print = n_iter_print
-        self.seed = seed
         self.patience = patience
         self.n_iter_min = n_iter_min
         self.clipping_value = clipping_value
@@ -235,7 +235,6 @@ class NeuralNetsRegressionPlugin(base.RegressionPlugin):
         n_iter: int = 1000,
         batch_size: int = 512,
         n_iter_print: int = 10,
-        seed: int = 0,
         patience: int = 10,
         n_iter_min: int = 100,
         dropout: float = 0.1,
@@ -243,10 +242,12 @@ class NeuralNetsRegressionPlugin(base.RegressionPlugin):
         batch_norm: bool = True,
         early_stopping: bool = True,
         hyperparam_search_iterations: Optional[int] = None,
+        random_seed: int = 0,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
 
+        enable_reproducible_results(random_seed)
         if hyperparam_search_iterations:
             n_iter = 5 * int(hyperparam_search_iterations)
 
@@ -258,7 +259,6 @@ class NeuralNetsRegressionPlugin(base.RegressionPlugin):
         self.n_iter = n_iter
         self.batch_size = batch_size
         self.n_iter_print = n_iter_print
-        self.seed = seed
         self.patience = patience
         self.n_iter_min = n_iter_min
         self.dropout = dropout
@@ -302,7 +302,7 @@ class NeuralNetsRegressionPlugin(base.RegressionPlugin):
             n_iter=self.n_iter,
             batch_size=self.batch_size,
             n_iter_print=self.n_iter_print,
-            seed=self.seed,
+            random_seed=self.seed,
             patience=self.patience,
             n_iter_min=self.n_iter_min,
             dropout=self.dropout,

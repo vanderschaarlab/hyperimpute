@@ -49,6 +49,7 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
         max_iter: int = 10000,
         penalty: str = "l2",
         model: Any = None,
+        random_seed: int = 0,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
@@ -64,6 +65,7 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
             class_weight=LogisticRegressionPlugin.weights[class_weight],
             penalty=penalty,
             max_iter=max_iter,
+            random_state=random_seed,
             n_jobs=-1,
         )
 
