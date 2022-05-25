@@ -1,4 +1,4 @@
-name: HyperImpute Package release
+name: Package Release
 
 on:
   release:
