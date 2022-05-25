@@ -113,7 +113,7 @@ class EM(TransformerMixin):
         Mu_tilde, Sigma_tilde = {}, {}
 
         for i in range(rows):
-            Sigma_tilde[i] = np.zeros(columns ** 2).reshape(columns, columns)
+            Sigma_tilde[i] = np.zeros(columns**2).reshape(columns, columns)
             if set(observed[i, :]) == set(one_to_nc - 1):
                 # nothing to impute
                 continue
@@ -160,7 +160,7 @@ class EM(TransformerMixin):
         observed = one_to_nc * mask - 1
 
         Mu = np.nanmean(X, axis=0)
-        observed_rows = np.where(np.isnan(sum(X.T)) == False)[0]
+        observed_rows = np.where(np.isnan(sum(X.T)) is False)[0]
         Sigma = np.cov(
             X[
                 observed_rows,
@@ -213,7 +213,10 @@ class EMPlugin(base.ImputerPlugin):
         3  2.000000  2.000000  2.000000  2.000000
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        random_seed: int = 0,
+    ) -> None:
         super().__init__()
 
         self._model = EM()

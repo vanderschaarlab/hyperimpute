@@ -12,7 +12,7 @@ import hyperimpute.plugins.imputers.base as base
 class NopPlugin(base.ImputerPlugin):
     """Imputer plugin that doesn't alter the dataset."""
 
-    def __init__(self) -> None:
+    def __init__(self, random_seed: int = 0) -> None:
         super().__init__()
 
     @staticmethod

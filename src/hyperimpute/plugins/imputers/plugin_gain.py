@@ -13,6 +13,7 @@ import hyperimpute.logger as log
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
 import hyperimpute.plugins.utils.decorators as decorators
+from hyperimpute.utils.distributions import enable_reproducible_results
 
 EPS = 1e-8
 
@@ -334,8 +335,11 @@ class GainPlugin(base.ImputerPlugin):
         n_epochs: int = 100,
         hint_rate: float = 0.8,
         loss_alpha: int = 10,
+        random_seed: int = 0,
     ) -> None:
         super().__init__()
+
+        enable_reproducible_results(random_seed)
 
         self.batch_size = batch_size
         self.n_epochs = n_epochs

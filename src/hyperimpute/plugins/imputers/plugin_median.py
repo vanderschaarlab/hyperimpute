@@ -28,7 +28,10 @@ class MedianPlugin(base.ImputerPlugin):
         3  2.0  2.0  2.0  2.0
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        random_seed: int = 0,
+    ) -> None:
         super().__init__()
 
         self._model = SimpleImputer(strategy="median")

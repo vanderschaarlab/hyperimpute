@@ -1,6 +1,5 @@
 # stdlib
-import time
-from typing import Any, List, Union
+from typing import Any, List
 
 # third party
 import pandas as pd
@@ -45,7 +44,7 @@ class SKLearnIterativeChainedEquationsPlugin(base.ImputerPlugin):
         tol: float = 0.001,
         initial_strategy: int = 0,
         imputation_order: int = 0,
-        random_state: Union[int, None] = 0,
+        random_seed: int = 0,
     ) -> None:
         super().__init__()
 
@@ -53,13 +52,9 @@ class SKLearnIterativeChainedEquationsPlugin(base.ImputerPlugin):
         self.tol = tol
         self.initial_strategy = initial_strategy
         self.imputation_order = imputation_order
-        self.random_state = random_state
-
-        if not random_state:
-            random_state = int(time.time())
 
         self._model = IterativeImputer(
-            random_state=random_state,
+            random_state=random_seed,
             max_iter=max_iter,
             tol=tol,
             initial_strategy=SKLearnIterativeChainedEquationsPlugin.initial_strategy_vals[

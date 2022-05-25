@@ -1,6 +1,5 @@
 # stdlib
-import time
-from typing import Any, List, Union
+from typing import Any, List
 
 # third party
 import pandas as pd
@@ -49,7 +48,7 @@ class SKLearnMissForestPlugin(base.ImputerPlugin):
         max_iter: int = 100,
         max_depth: int = 3,
         bootstrap: bool = True,
-        random_state: Union[int, None] = 0,
+        random_seed: int = 0,
     ) -> None:
         super().__init__()
 
@@ -57,19 +56,16 @@ class SKLearnMissForestPlugin(base.ImputerPlugin):
         self.max_iter = max_iter
         self.max_depth = max_depth
         self.bootstrap = bootstrap
-        self.random_state = random_state
-
-        if not random_state:
-            random_state = int(time.time())
 
         estimator_rf = RandomForestRegressor(
             n_estimators=n_estimators,
             max_depth=max_depth,
+            random_state=random_seed,
             bootstrap=bootstrap,
             n_jobs=-1,
         )
         self._model = IterativeImputer(
-            estimator=estimator_rf, random_state=random_state, max_iter=max_iter
+            estimator=estimator_rf, random_state=random_seed, max_iter=max_iter
         )
 
     @staticmethod
