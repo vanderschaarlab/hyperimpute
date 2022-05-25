@@ -266,13 +266,13 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
         self.n_iter = n_iter
         self.batch_size = batch_size
         self.n_iter_print = n_iter_print
-        self.random_state = random_state
         self.patience = patience
         self.n_iter_min = n_iter_min
         self.dropout = dropout
         self.clipping_value = clipping_value
         self.batch_norm = batch_norm
         self.early_stopping = early_stopping
+        self.random_state = random_state
 
     @staticmethod
     def name() -> str:

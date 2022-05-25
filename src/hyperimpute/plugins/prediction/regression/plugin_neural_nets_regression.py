@@ -251,6 +251,7 @@ class NeuralNetsRegressionPlugin(base.RegressionPlugin):
         if hyperparam_search_iterations:
             n_iter = 5 * int(hyperparam_search_iterations)
 
+        self.random_state = random_state
         self.n_layers_hidden = n_layers_hidden
         self.n_units_hidden = n_units_hidden
         self.nonlin = nonlin
@@ -302,7 +303,7 @@ class NeuralNetsRegressionPlugin(base.RegressionPlugin):
             n_iter=self.n_iter,
             batch_size=self.batch_size,
             n_iter_print=self.n_iter_print,
-            random_state=self.seed,
+            random_state=self.random_state,
             patience=self.patience,
             n_iter_min=self.n_iter_min,
             dropout=self.dropout,
