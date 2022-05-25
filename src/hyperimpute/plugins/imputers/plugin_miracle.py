@@ -40,7 +40,7 @@ class MiraclePlugin(base.ImputerPlugin):
         window: int = 10,
         max_steps: int = 400,
         seed_imputation: str = "mean",
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
@@ -63,7 +63,7 @@ class MiraclePlugin(base.ImputerPlugin):
         self.window = window
         self.max_steps = max_steps
         self.seed_imputation = seed_imputation
-        self.random_seed = random_seed
+        self.random_state = random_state
 
     @staticmethod
     def name() -> str:
@@ -111,7 +111,7 @@ class MiraclePlugin(base.ImputerPlugin):
             window=self.window,
             max_steps=self.max_steps,
             missing_list=missing_idxs,
-            random_seed=self.random_seed,
+            random_seed=self.random_state,
         )
 
         seed_imputer = self._get_seed_imputer(self.seed_imputation)

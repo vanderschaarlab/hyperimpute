@@ -146,11 +146,11 @@ class SinkhornPlugin(base.ImputerPlugin):
         n_pairs: int = 1,
         noise: float = 1e-2,
         scaling: float = 0.9,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
-        enable_reproducible_results(random_seed)
+        enable_reproducible_results(random_state)
 
         self.eps = eps
         self.lr = lr

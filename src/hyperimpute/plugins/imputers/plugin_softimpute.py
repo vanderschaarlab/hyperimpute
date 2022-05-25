@@ -45,14 +45,14 @@ class SoftImpute(TransformerMixin):
         max_rank: int = 2,
         shrink_lambda: float = 0,
         cv_len: int = 3,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         self.cv_len = cv_len
         self.shrink_lambda = shrink_lambda
         self.maxit = maxit
         self.convergence_threshold = convergence_threshold
         self.max_rank = max_rank
-        self.random_seed = random_seed
+        self.random_state = random_state
 
     def save(self) -> bytes:
         buff = {
@@ -149,7 +149,7 @@ class SoftImpute(TransformerMixin):
         """
         if self.max_rank:
             U, s, V = randomized_svd(
-                X, n_components=self.max_rank, random_state=self.random_seed
+                X, n_components=self.max_rank, random_state=self.random_state
             )
         else:
             U, s, V = np.linalg.svd(X, compute_uv=True, full_matrices=False)
@@ -209,7 +209,7 @@ class SoftImpute(TransformerMixin):
 
         # svd on x0
         if self.max_rank:
-            _, s, _ = randomized_svd(X0, self.max_rank, random_state=0)
+            _, s, _ = randomized_svd(X0, self.max_rank, random_state=self.random_state)
         else:
             s = np.linalg.svd(X0, compute_uv=False, full_matrices=False)
 
@@ -279,7 +279,7 @@ class SoftImputePlugin(base.ImputerPlugin):
         max_rank: int = 2,
         shrink_lambda: float = 0,
         cv_len: int = 3,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
@@ -289,7 +289,7 @@ class SoftImputePlugin(base.ImputerPlugin):
         self.shrink_lambda = shrink_lambda
         self.cv_len = cv_len
 
-        self._model = SoftImpute(random_seed=random_seed)
+        self._model = SoftImpute(random_state=random_state)
 
     @staticmethod
     def name() -> str:

@@ -72,7 +72,7 @@ class XGBoostPlugin(base.ClassifierPlugin):
         max_bin: int = 256,
         booster: int = 0,
         nthread: int = max(1, int(multiprocessing.cpu_count() / 2)),
-        random_seed: int = 0,
+        random_state: int = 0,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
@@ -103,7 +103,7 @@ class XGBoostPlugin(base.ClassifierPlugin):
             verbosity=0,
             use_label_encoder=False,
             booster=XGBoostPlugin.booster[booster],
-            random_state=random_seed,
+            random_state=random_state,
             nthread=nthread,
             **gpu_args,
             **kwargs,

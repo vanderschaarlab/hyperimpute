@@ -73,7 +73,7 @@ class BasicNet(nn.Module):
         n_iter: int = 300,
         batch_size: int = 1024,
         n_iter_print: int = 10,
-        random_seed: int = 0,
+        random_state: int = 0,
         patience: int = 10,
         n_iter_min: int = 100,
         dropout: float = 0.1,
@@ -242,12 +242,12 @@ class NeuralNetsRegressionPlugin(base.RegressionPlugin):
         batch_norm: bool = True,
         early_stopping: bool = True,
         hyperparam_search_iterations: Optional[int] = None,
-        random_seed: int = 0,
+        random_state: int = 0,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
 
-        enable_reproducible_results(random_seed)
+        enable_reproducible_results(random_state)
         if hyperparam_search_iterations:
             n_iter = 5 * int(hyperparam_search_iterations)
 
@@ -302,7 +302,7 @@ class NeuralNetsRegressionPlugin(base.RegressionPlugin):
             n_iter=self.n_iter,
             batch_size=self.batch_size,
             n_iter_print=self.n_iter_print,
-            random_seed=self.seed,
+            random_state=self.seed,
             patience=self.patience,
             n_iter_min=self.n_iter_min,
             dropout=self.dropout,

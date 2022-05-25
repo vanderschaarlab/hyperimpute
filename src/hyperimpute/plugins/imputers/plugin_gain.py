@@ -335,11 +335,11 @@ class GainPlugin(base.ImputerPlugin):
         n_epochs: int = 100,
         hint_rate: float = 0.8,
         loss_alpha: int = 10,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
-        enable_reproducible_results(random_seed)
+        enable_reproducible_results(random_state)
 
         self.batch_size = batch_size
         self.n_epochs = n_epochs

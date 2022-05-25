@@ -51,8 +51,8 @@ class BasicNet(nn.Module):
         Batch size
     n_iter_print: int
         Number of iterations after which to print updates and check the validation loss.
-    random_seed: int
-        random_seed used
+    random_state: int
+        random_state used
     val_split_prop: float
         Proportion of samples used for validation split (can be 0)
     patience: int
@@ -75,7 +75,7 @@ class BasicNet(nn.Module):
         n_iter: int = 300,
         batch_size: int = 1024,
         n_iter_print: int = 10,
-        random_seed: int = 0,
+        random_state: int = 0,
         patience: int = 10,
         n_iter_min: int = 100,
         dropout: float = 0.1,
@@ -134,7 +134,7 @@ class BasicNet(nn.Module):
         self.n_iter = n_iter
         self.batch_size = batch_size
         self.n_iter_print = n_iter_print
-        self.random_seed = random_seed
+        self.random_state = random_state
         self.patience = patience
         self.n_iter_min = n_iter_min
         self.clipping_value = clipping_value
@@ -241,7 +241,7 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
         n_iter: int = 1000,
         batch_size: int = 128,
         n_iter_print: int = 10,
-        random_seed: int = 0,
+        random_state: int = 0,
         patience: int = 10,
         n_iter_min: int = 100,
         dropout: float = 0.1,
@@ -253,7 +253,7 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
     ) -> None:
         super().__init__(**kwargs)
 
-        enable_reproducible_results(random_seed)
+        enable_reproducible_results(random_state)
 
         if hyperparam_search_iterations:
             n_iter = 5 * int(hyperparam_search_iterations)
@@ -266,7 +266,7 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
         self.n_iter = n_iter
         self.batch_size = batch_size
         self.n_iter_print = n_iter_print
-        self.random_seed = random_seed
+        self.random_state = random_state
         self.patience = patience
         self.n_iter_min = n_iter_min
         self.dropout = dropout
@@ -309,7 +309,7 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
             n_iter=self.n_iter,
             batch_size=self.batch_size,
             n_iter_print=self.n_iter_print,
-            random_seed=self.random_seed,
+            random_state=self.random_state,
             patience=self.patience,
             n_iter_min=self.n_iter_min,
             dropout=self.dropout,

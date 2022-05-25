@@ -215,7 +215,7 @@ class EMPlugin(base.ImputerPlugin):
 
     def __init__(
         self,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 

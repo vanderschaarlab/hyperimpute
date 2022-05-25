@@ -48,7 +48,7 @@ class SKLearnMissForestPlugin(base.ImputerPlugin):
         max_iter: int = 100,
         max_depth: int = 3,
         bootstrap: bool = True,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
@@ -60,12 +60,12 @@ class SKLearnMissForestPlugin(base.ImputerPlugin):
         estimator_rf = RandomForestRegressor(
             n_estimators=n_estimators,
             max_depth=max_depth,
-            random_state=random_seed,
+            random_state=random_state,
             bootstrap=bootstrap,
             n_jobs=-1,
         )
         self._model = IterativeImputer(
-            estimator=estimator_rf, random_state=random_seed, max_iter=max_iter
+            estimator=estimator_rf, random_state=random_state, max_iter=max_iter
         )
 
     @staticmethod

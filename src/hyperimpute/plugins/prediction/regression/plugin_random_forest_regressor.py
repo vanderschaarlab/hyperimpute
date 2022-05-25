@@ -53,7 +53,7 @@ class RandomForestRegressionPlugin(base.RegressionPlugin):
         min_samples_leaf: int = 1,
         max_depth: Optional[int] = 3,
         hyperparam_search_iterations: Optional[int] = None,
-        random_seed: int = 0,
+        random_state: int = 0,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
@@ -69,7 +69,7 @@ class RandomForestRegressionPlugin(base.RegressionPlugin):
             max_depth=max_depth,
             bootstrap=bootstrap,
             min_samples_leaf=min_samples_leaf,
-            random_state=random_seed,
+            random_state=random_state,
             n_jobs=max(1, int(multiprocessing.cpu_count() / 2)),
         )
 

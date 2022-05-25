@@ -41,21 +41,21 @@ class IterativeChainedEquationsPlugin(base.ImputerPlugin):
         max_iter: int = 1000,
         initial_strategy: int = 0,
         imputation_order: int = 0,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
         self.max_iter = max_iter
         self.initial_strategy = initial_strategy
         self.imputation_order = imputation_order
-        self.random_seed = random_seed
+        self.random_state = random_state
 
         self._model = base_model(
             classifier_seed=["logistic_regression"],
             regression_seed=["linear_regression"],
             imputation_order=imputation_order,
             baseline_imputer=initial_strategy,
-            random_seed=random_seed,
+            random_state=random_state,
             n_inner_iter=max_iter,
             class_threshold=5,
         )

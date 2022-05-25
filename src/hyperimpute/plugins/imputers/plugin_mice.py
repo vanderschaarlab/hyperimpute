@@ -52,7 +52,7 @@ class MicePlugin(base.ImputerPlugin):
         tol: float = 0.001,
         initial_strategy: int = 0,
         imputation_order: int = 0,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
@@ -61,7 +61,7 @@ class MicePlugin(base.ImputerPlugin):
         self.tol = tol
         self.initial_strategy = initial_strategy
         self.imputation_order = imputation_order
-        self.random_seed = random_seed
+        self.random_state = random_state
 
         self._models = []
         for idx in range(n_imputations):
@@ -72,7 +72,7 @@ class MicePlugin(base.ImputerPlugin):
                     initial_strategy=MicePlugin.initial_strategy_vals[initial_strategy],
                     imputation_order=MicePlugin.imputation_order_vals[imputation_order],
                     sample_posterior=True,
-                    random_seed=random_seed + idx,
+                    random_state=random_state + idx,
                 )
             )
 

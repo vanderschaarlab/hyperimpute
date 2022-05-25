@@ -69,12 +69,12 @@ class HyperbandOptimizer:
         regression_seed: list,
         max_iter: int = 27,  # maximum iterations per configuration
         eta: int = 3,  # defines configuration downsampling rate (default = 3)
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         self.name = name
         self.category = category
         self.failure_score = -9999999
-        self.random_seed = random_seed
+        self.random_state = random_state
 
         self.predictions = Predictions(category=category)
         if category == "classifier":
@@ -205,7 +205,7 @@ class HyperbandOptimizer:
                         X,
                         y,
                         hyperparam_search_iterations=n_iterations,
-                        random_seed=self.random_seed,
+                        random_state=self.random_state,
                         **model_params,
                     )
                     scores.append(score)
@@ -244,11 +244,11 @@ class BayesianOptimizer:
         regression_seed: list,
         patience: int = 10,
         inner_patience: int = 4,
-        random_seed: int = 0,
+        random_state: int = 0,
     ):
         self.name = name
         self.category = category
-        self.random_seed = random_seed
+        self.random_state = random_state
 
         self.failure_score = -9999999
         if category == "classifier":
@@ -286,7 +286,7 @@ class BayesianOptimizer:
         study, pruner = self.bo_studies[plugin_name]
 
         def evaluate_args(**kwargs: Any) -> float:
-            model = plugin(random_seed=self.random_seed, **kwargs)
+            model = plugin(random_state=self.random_state, **kwargs)
             for n_folds in [2, 1]:
                 try:
                     if self.category == "regression":
@@ -372,11 +372,11 @@ class SimpleOptimizer:
         category: str,
         classifier_seed: list,
         regression_seed: list,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         self.name = name
         self.category = category
-        self.random_seed = random_seed
+        self.random_state = random_state
 
         self.failure_score = -9999999
         self.classifier_seed = classifier_seed
@@ -401,7 +401,9 @@ class SimpleOptimizer:
     def _eval_params(
         self, model_name: str, X: pd.DataFrame, y: pd.DataFrame, **params: Any
     ) -> float:
-        model = self.predictions.get(model_name, random_seed=self.random_seed, **params)
+        model = self.predictions.get(
+            model_name, random_state=self.random_state, **params
+        )
         for n_folds in [2, 1]:
             try:
                 if self.category == "regression":
@@ -463,7 +465,7 @@ class IterativeErrorCorrection:
         select_patience: int = 3,
         select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
-        random_seed: int = 0,
+        random_state: int = 0,
     ):
         if optimizer not in [
             "hyperband",
@@ -476,7 +478,7 @@ class IterativeErrorCorrection:
         self.select_model_by_iteration = select_model_by_iteration
         self.select_patience = select_patience
         self.select_lazy = select_lazy
-        self.random_seed = random_seed
+        self.random_state = random_state
 
         if not select_model_by_column:
             class_threshold = 0
@@ -559,7 +561,7 @@ class IterativeErrorCorrection:
                 self.column_to_optimizer[col] = optimizer(
                     col,
                     "classifier",
-                    random_seed=self.random_seed,
+                    random_state=self.random_state,
                     **self._select_seeds(avail_cnt),
                 )
             else:
@@ -567,7 +569,7 @@ class IterativeErrorCorrection:
                 self.column_to_optimizer[col] = optimizer(
                     col,
                     "regression",
-                    random_seed=self.random_seed,
+                    random_state=self.random_state,
                     **self._select_seeds(avail_cnt),
                 )
 
@@ -807,7 +809,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         class_threshold: int. Maximum number of unique items in a categorical column.
         optimize_thresh: int. The number of subsamples used for the model search.
         n_inner_iter: int. number of imputation iterations.
-        random_seed: int. random seed.
+        random_state: int. random seed.
         select_model_by_column: bool. If False, reuse the first model selected in the current iteration for all columns. Else, search the model for each column.
         select_model_by_iteration: bool. If False, reuse the models selected in the first iteration. Otherwise, refresh the models on each iteration.
         select_lazy: bool. If True, if there is a trend towards a certain model architecture, the loop reuses than for all columns, instead of calling the optimizer.
@@ -827,7 +829,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         class_threshold: int = 5,
         optimize_thresh: int = 1000,
         n_inner_iter: int = 50,
-        random_seed: int = 0,
+        random_state: int = 0,
         select_model_by_column: bool = True,
         select_model_by_iteration: bool = True,
         select_patience: int = 3,
@@ -836,7 +838,7 @@ class HyperImputePlugin(base.ImputerPlugin):
     ) -> None:
         super().__init__()
 
-        enable_reproducible_results(random_seed)
+        enable_reproducible_results(random_state)
         self.classifier_seed = classifier_seed
         self.regression_seed = regression_seed
         self.imputation_order = imputation_order
@@ -845,7 +847,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         self.class_threshold = class_threshold
         self.optimize_thresh = optimize_thresh
         self.n_inner_iter = n_inner_iter
-        self.random_seed = random_seed
+        self.random_state = random_state
         self.select_model_by_column = select_model_by_column
         self.select_model_by_iteration = select_model_by_iteration
         self.select_patience = select_patience
@@ -871,7 +873,7 @@ class HyperImputePlugin(base.ImputerPlugin):
             select_patience=self.select_patience,
             select_lazy=self.select_lazy,
             inner_loop_hook=self.inner_loop_hook,
-            random_seed=random_seed,
+            random_state=random_state,
         )
 
     @staticmethod

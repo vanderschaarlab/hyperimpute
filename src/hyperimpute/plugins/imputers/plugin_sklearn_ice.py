@@ -44,7 +44,7 @@ class SKLearnIterativeChainedEquationsPlugin(base.ImputerPlugin):
         tol: float = 0.001,
         initial_strategy: int = 0,
         imputation_order: int = 0,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
@@ -54,7 +54,7 @@ class SKLearnIterativeChainedEquationsPlugin(base.ImputerPlugin):
         self.imputation_order = imputation_order
 
         self._model = IterativeImputer(
-            random_state=random_seed,
+            random_state=random_state,
             max_iter=max_iter,
             tol=tol,
             initial_strategy=SKLearnIterativeChainedEquationsPlugin.initial_strategy_vals[

@@ -49,7 +49,7 @@ class MissForestPlugin(base.ImputerPlugin):
         max_iter: int = 100,
         initial_strategy: int = 0,
         imputation_order: int = 0,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
@@ -63,7 +63,7 @@ class MissForestPlugin(base.ImputerPlugin):
             regression_seed=["random_forest_regressor"],
             imputation_order=imputation_order,
             baseline_imputer=initial_strategy,
-            random_seed=random_seed,
+            random_state=random_state,
             n_inner_iter=max_iter,
             class_threshold=5,
         )

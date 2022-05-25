@@ -62,7 +62,7 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
         n_estimators: int = 100,
         max_depth: Optional[int] = 6,
         lr: Optional[float] = None,
-        random_seed: int = 0,
+        random_state: int = 0,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
@@ -79,7 +79,7 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
             }
         self.model = XGBRegressor(
             verbosity=0,
-            random_state=random_seed,
+            random_state=random_state,
             n_estimators=n_estimators,
             max_depth=max_depth,
             nthread=max(1, int(multiprocessing.cpu_count() / 2)),

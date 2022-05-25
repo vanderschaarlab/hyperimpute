@@ -35,11 +35,11 @@ class MIWAEPlugin(base.ImputerPlugin):
         batch_size: int = 256,
         latent_size: int = 1,
         n_hidden: int = 1,
-        random_seed: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
-        enable_reproducible_results(random_seed)
+        enable_reproducible_results(random_state)
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size  # batch size
