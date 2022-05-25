@@ -21,6 +21,7 @@ if __name__ == "__main__":
     try:
         setup(
             version=find_version(),
+            setup_requires=["torch"],
         )
     except:  # noqa
         print(
