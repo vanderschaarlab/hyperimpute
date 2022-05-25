@@ -47,6 +47,7 @@ class CatBoostPlugin(base.ClassifierPlugin):
         grow_policy: int = 0,
         model: Any = None,
         hyperparam_search_iterations: Optional[int] = None,
+        random_state: int = 0,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
@@ -71,6 +72,7 @@ class CatBoostPlugin(base.ClassifierPlugin):
             used_ram_limit="6gb",
             n_estimators=n_estimators,
             grow_policy=CatBoostPlugin.grow_policies[grow_policy],
+            random_state=random_state,
             **gpu_args,
         )
 

@@ -69,10 +69,12 @@ class HyperbandOptimizer:
         regression_seed: list,
         max_iter: int = 27,  # maximum iterations per configuration
         eta: int = 3,  # defines configuration downsampling rate (default = 3)
+        random_state: int = 0,
     ) -> None:
         self.name = name
         self.category = category
         self.failure_score = -9999999
+        self.random_state = random_state
 
         self.predictions = Predictions(category=category)
         if category == "classifier":
@@ -203,6 +205,7 @@ class HyperbandOptimizer:
                         X,
                         y,
                         hyperparam_search_iterations=n_iterations,
+                        random_state=self.random_state,
                         **model_params,
                     )
                     scores.append(score)
@@ -241,9 +244,11 @@ class BayesianOptimizer:
         regression_seed: list,
         patience: int = 10,
         inner_patience: int = 4,
+        random_state: int = 0,
     ):
         self.name = name
         self.category = category
+        self.random_state = random_state
 
         self.failure_score = -9999999
         if category == "classifier":
@@ -281,7 +286,7 @@ class BayesianOptimizer:
         study, pruner = self.bo_studies[plugin_name]
 
         def evaluate_args(**kwargs: Any) -> float:
-            model = plugin(**kwargs)
+            model = plugin(random_state=self.random_state, **kwargs)
             for n_folds in [2, 1]:
                 try:
                     if self.category == "regression":
@@ -367,9 +372,11 @@ class SimpleOptimizer:
         category: str,
         classifier_seed: list,
         regression_seed: list,
+        random_state: int = 0,
     ) -> None:
         self.name = name
         self.category = category
+        self.random_state = random_state
 
         self.failure_score = -9999999
         self.classifier_seed = classifier_seed
@@ -394,7 +401,9 @@ class SimpleOptimizer:
     def _eval_params(
         self, model_name: str, X: pd.DataFrame, y: pd.DataFrame, **params: Any
     ) -> float:
-        model = self.predictions.get(model_name, **params)
+        model = self.predictions.get(
+            model_name, random_state=self.random_state, **params
+        )
         for n_folds in [2, 1]:
             try:
                 if self.category == "regression":
@@ -456,6 +465,7 @@ class IterativeErrorCorrection:
         select_patience: int = 3,
         select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
+        random_state: int = 0,
     ):
         if optimizer not in [
             "hyperband",
@@ -468,6 +478,7 @@ class IterativeErrorCorrection:
         self.select_model_by_iteration = select_model_by_iteration
         self.select_patience = select_patience
         self.select_lazy = select_lazy
+        self.random_state = random_state
 
         if not select_model_by_column:
             class_threshold = 0
@@ -550,6 +561,7 @@ class IterativeErrorCorrection:
                 self.column_to_optimizer[col] = optimizer(
                     col,
                     "classifier",
+                    random_state=self.random_state,
                     **self._select_seeds(avail_cnt),
                 )
             else:
@@ -557,6 +569,7 @@ class IterativeErrorCorrection:
                 self.column_to_optimizer[col] = optimizer(
                     col,
                     "regression",
+                    random_state=self.random_state,
                     **self._select_seeds(avail_cnt),
                 )
 
@@ -860,6 +873,7 @@ class HyperImputePlugin(base.ImputerPlugin):
             select_patience=self.select_patience,
             select_lazy=self.select_lazy,
             inner_loop_hook=self.inner_loop_hook,
+            random_state=random_state,
         )
 
     @staticmethod

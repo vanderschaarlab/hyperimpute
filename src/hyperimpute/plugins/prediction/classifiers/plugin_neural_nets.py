@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import hyperimpute.logger as log
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.classifiers.base as base
+from hyperimpute.utils.distributions import enable_reproducible_results
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -50,8 +51,8 @@ class BasicNet(nn.Module):
         Batch size
     n_iter_print: int
         Number of iterations after which to print updates and check the validation loss.
-    seed: int
-        Seed used
+    random_state: int
+        random_state used
     val_split_prop: float
         Proportion of samples used for validation split (can be 0)
     patience: int
@@ -74,7 +75,7 @@ class BasicNet(nn.Module):
         n_iter: int = 300,
         batch_size: int = 1024,
         n_iter_print: int = 10,
-        seed: int = 0,
+        random_state: int = 0,
         patience: int = 10,
         n_iter_min: int = 100,
         dropout: float = 0.1,
@@ -133,7 +134,7 @@ class BasicNet(nn.Module):
         self.n_iter = n_iter
         self.batch_size = batch_size
         self.n_iter_print = n_iter_print
-        self.seed = seed
+        self.random_state = random_state
         self.patience = patience
         self.n_iter_min = n_iter_min
         self.clipping_value = clipping_value
@@ -240,7 +241,7 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
         n_iter: int = 1000,
         batch_size: int = 128,
         n_iter_print: int = 10,
-        seed: int = 0,
+        random_state: int = 0,
         patience: int = 10,
         n_iter_min: int = 100,
         dropout: float = 0.1,
@@ -251,6 +252,8 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
+
+        enable_reproducible_results(random_state)
 
         if hyperparam_search_iterations:
             n_iter = 5 * int(hyperparam_search_iterations)
@@ -263,13 +266,13 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
         self.n_iter = n_iter
         self.batch_size = batch_size
         self.n_iter_print = n_iter_print
-        self.seed = seed
         self.patience = patience
         self.n_iter_min = n_iter_min
         self.dropout = dropout
         self.clipping_value = clipping_value
         self.batch_norm = batch_norm
         self.early_stopping = early_stopping
+        self.random_state = random_state
 
     @staticmethod
     def name() -> str:
@@ -306,7 +309,7 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
             n_iter=self.n_iter,
             batch_size=self.batch_size,
             n_iter_print=self.n_iter_print,
-            seed=self.seed,
+            random_state=self.random_state,
             patience=self.patience,
             n_iter_min=self.n_iter_min,
             dropout=self.dropout,

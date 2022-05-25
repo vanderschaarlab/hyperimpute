@@ -13,6 +13,7 @@ from hyperimpute.plugins.core.device import DEVICE
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
 import hyperimpute.plugins.utils.decorators as decorators
+from hyperimpute.utils.distributions import enable_reproducible_results
 
 
 class SinkhornImputation(TransformerMixin):
@@ -145,8 +146,11 @@ class SinkhornPlugin(base.ImputerPlugin):
         n_pairs: int = 1,
         noise: float = 1e-2,
         scaling: float = 0.9,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
+
+        enable_reproducible_results(random_state)
 
         self.eps = eps
         self.lr = lr

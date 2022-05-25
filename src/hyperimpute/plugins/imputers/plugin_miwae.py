@@ -12,6 +12,7 @@ import torch.distributions as td
 import hyperimpute.logger as log
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.imputers.base as base
+from hyperimpute.utils.distributions import enable_reproducible_results
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -34,8 +35,11 @@ class MIWAEPlugin(base.ImputerPlugin):
         batch_size: int = 256,
         latent_size: int = 1,
         n_hidden: int = 1,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
+
+        enable_reproducible_results(random_state)
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size  # batch size

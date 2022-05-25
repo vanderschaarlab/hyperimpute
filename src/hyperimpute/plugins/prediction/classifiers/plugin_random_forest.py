@@ -52,6 +52,7 @@ class RandomForestPlugin(base.ClassifierPlugin):
         bootstrap: bool = True,
         min_samples_leaf: int = 1,
         max_depth: Optional[int] = 3,
+        random_state: int = 0,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
@@ -67,6 +68,7 @@ class RandomForestPlugin(base.ClassifierPlugin):
             max_depth=max_depth,
             bootstrap=bootstrap,
             min_samples_leaf=min_samples_leaf,
+            random_state=random_state,
             n_jobs=max(1, int(multiprocessing.cpu_count() / 2)),
         )
 

@@ -1,6 +1,5 @@
 # stdlib
-import time
-from typing import Any, List, Union
+from typing import Any, List
 
 # third party
 import pandas as pd
@@ -48,20 +47,16 @@ class MissForestPlugin(base.ImputerPlugin):
         self,
         n_estimators: int = 10,
         max_iter: int = 100,
-        random_state: Union[int, None] = 0,
         initial_strategy: int = 0,
         imputation_order: int = 0,
+        random_state: int = 0,
     ) -> None:
         super().__init__()
 
         self.n_estimators = n_estimators
         self.max_iter = max_iter
-        self.random_state = random_state
         self.initial_strategy = initial_strategy
         self.imputation_order = imputation_order
-
-        if not random_state:
-            random_state = int(time.time())
 
         self._model = base_model(
             classifier_seed=["random_forest"],
