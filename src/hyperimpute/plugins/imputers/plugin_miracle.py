@@ -95,8 +95,7 @@ class MiraclePlugin(base.ImputerPlugin):
         return self
 
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = np.asarray(X)
-        missing_idxs = np.where(np.any(np.isnan(np.asarray(X)), axis=0))[0]
+        missing_idxs = np.where(np.any(np.isnan(X.values), axis=0))[0]
 
         _model = MIRACLE(
             num_inputs=X.shape[1],
@@ -117,7 +116,7 @@ class MiraclePlugin(base.ImputerPlugin):
         seed_imputer = self._get_seed_imputer(self.seed_imputation)
         X_seed = seed_imputer.fit_transform(X)
 
-        return _model.fit(X, X_seed=X_seed)
+        return _model.fit(X.values, X_seed=X_seed.values)
 
     def save(self) -> bytes:
         return b""

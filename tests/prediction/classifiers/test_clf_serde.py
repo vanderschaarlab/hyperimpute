@@ -3,6 +3,7 @@ from typing import Tuple
 
 # third party
 import numpy as np
+import pandas as pd
 import pytest
 from sklearn.model_selection import train_test_split
 
@@ -11,14 +12,14 @@ from hyperimpute.plugins import Predictions
 from hyperimpute.utils.serialization import load_model, save_model
 
 
-def dataset() -> Tuple[np.ndarray, np.ndarray]:
+def dataset() -> Tuple[pd.DataFrame, pd.Series]:
     rng = np.random.RandomState(1)
 
     N = 1000
     X = rng.randint(N, size=(N, 3))
     y = rng.randint(2, size=(N))
 
-    return X, y
+    return pd.DataFrame(X), pd.Series(y)
 
 
 @pytest.mark.parametrize("plugin", Predictions().list())

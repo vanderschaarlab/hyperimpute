@@ -52,12 +52,12 @@ def test_neural_nets_plugin_hyperparams(test_plugin: PredictionPlugin) -> None:
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
 def test_neural_nets_plugin_fit_predict(test_plugin: PredictionPlugin) -> None:
-    X, y = load_iris(return_X_y=True)
+    X, y = load_iris(return_X_y=True, as_frame=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-    y_pred = test_plugin.fit(X_train, y_train).predict(X_test).to_numpy()
+    y_pred = test_plugin.fit(X_train, y_train).predict(X_test)
 
-    assert np.abs(np.subtract(y_pred, y_test)).mean() < 1
+    assert np.abs(np.subtract(y_pred.values, y_test.values)).mean() < 1
 
 
 @pytest.mark.slow
@@ -65,7 +65,7 @@ def test_param_search() -> None:
     if len(plugin.hyperparameter_space()) == 0:
         return
 
-    X, y = load_iris(return_X_y=True)
+    X, y = load_iris(return_X_y=True, as_frame=True)
 
     def evaluate_args(**kwargs: Any) -> float:
         kwargs["n_layers_hidden"] = 1

@@ -5,9 +5,11 @@ from typing import Any, List, Tuple
 # third party
 import numpy as np
 from optuna.trial import Trial
+from pydantic import validate_arguments
 
 
 class Params(metaclass=ABCMeta):
+    @validate_arguments
     def __init__(self, name: str, bounds: Tuple[Any, Any]) -> None:
         self.name = name
         self.bounds = bounds
@@ -26,6 +28,7 @@ class Params(metaclass=ABCMeta):
 
 
 class Categorical(Params):
+    @validate_arguments
     def __init__(self, name: str, choices: List[Any]) -> None:
         super().__init__(name, (min(choices), max(choices)))
         self.name = name
@@ -42,6 +45,7 @@ class Categorical(Params):
 
 
 class Float(Params):
+    @validate_arguments
     def __init__(self, name: str, low: float, high: float) -> None:
         low = float(low)
         high = float(high)
@@ -54,6 +58,7 @@ class Float(Params):
     def get(self) -> List[Any]:
         return [self.name, self.low, self.high]
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def sample(self, trial: Trial) -> float:
         return trial.suggest_float(self.name, self.low, self.high)
 
@@ -62,6 +67,7 @@ class Float(Params):
 
 
 class Integer(Params):
+    @validate_arguments
     def __init__(self, name: str, low: int, high: int, step: int = 1) -> None:
         self.low = low
         self.high = high
@@ -77,6 +83,7 @@ class Integer(Params):
     def get(self) -> List[Any]:
         return [self.name, self.low, self.high, self.step]
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def sample(self, trial: Trial) -> Any:
         return trial.suggest_int(self.name, self.low, self.high, self.step)
 

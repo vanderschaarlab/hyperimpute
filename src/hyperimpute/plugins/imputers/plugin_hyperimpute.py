@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 import numpy as np
 import optuna
 import pandas as pd
+from pydantic import validate_arguments
 from sklearn.impute import MissingIndicator
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import LabelEncoder
@@ -61,6 +62,7 @@ class NpEncoder(json.JSONEncoder):
 
 
 class HyperbandOptimizer:
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
         name: str,
@@ -112,6 +114,7 @@ class HyperbandOptimizer:
             {"name": name, "val": dict_val}, sort_keys=True, cls=NpEncoder
         )
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _sample_model(self, name: str, n: int) -> list:
         hashed = self._hash_dict(name, {})
         result: List[Tuple] = []
@@ -132,19 +135,22 @@ class HyperbandOptimizer:
 
         return result
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _sample(self, n: int) -> list:
         results = []
         for name in self.seeds:
             results.extend(self._sample_model(name, n))
         return results
 
-    def _baseline(self, X: pd.DataFrame, y: pd.DataFrame) -> None:
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def _baseline(self, X: pd.DataFrame, y: pd.Series) -> None:
         for seed in self.seeds:
             self._eval_params(seed, X, y, hyperparam_search_iterations=1)
         # TODO: balance methods
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _eval_params(
-        self, model_name: str, X: pd.DataFrame, y: pd.DataFrame, **params: Any
+        self, model_name: str, X: pd.DataFrame, y: pd.Series, **params: Any
     ) -> float:
         model = self.predictions.get(model_name, **params)
         for n_folds in [2, 1]:
@@ -171,9 +177,8 @@ class HyperbandOptimizer:
 
         return score
 
-    def evaluate(
-        self, X: pd.DataFrame, y: pd.DataFrame
-    ) -> Tuple[PredictionPlugin, float]:
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def evaluate(self, X: pd.DataFrame, y: pd.Series) -> Tuple[PredictionPlugin, float]:
         self._reset()
         self._baseline(X, y)
 
@@ -236,6 +241,7 @@ class HyperbandOptimizer:
 
 
 class BayesianOptimizer:
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
         name: str,
@@ -272,11 +278,12 @@ class BayesianOptimizer:
         self.best_candidate = self.seeds[0]
         self.best_params: dict = {}
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def evaluate_plugin(
         self,
         plugin_name: str,
         X: pd.DataFrame,
-        y: pd.DataFrame,
+        y: pd.Series,
         prev_best_score: float,
     ) -> tuple:
         # BO evaluation for a single plugin
@@ -333,8 +340,9 @@ class BayesianOptimizer:
 
         return study.best_value, study.best_trial.params
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def evaluate(
-        self, X_train: pd.DataFrame, y_train: pd.DataFrame
+        self, X_train: pd.DataFrame, y_train: pd.Series
     ) -> Tuple[PredictionPlugin, float]:
         best_score = self.failure_score
 
@@ -366,6 +374,7 @@ class BayesianOptimizer:
 
 
 class SimpleOptimizer:
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
         name: str,
@@ -398,8 +407,9 @@ class SimpleOptimizer:
         for seed in self.seeds:
             self.model_best_score[seed] = -np.inf
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _eval_params(
-        self, model_name: str, X: pd.DataFrame, y: pd.DataFrame, **params: Any
+        self, model_name: str, X: pd.DataFrame, y: pd.Series, **params: Any
     ) -> float:
         model = self.predictions.get(
             model_name, random_state=self.random_state, **params
@@ -430,9 +440,8 @@ class SimpleOptimizer:
 
         return score
 
-    def evaluate(
-        self, X: pd.DataFrame, y: pd.DataFrame
-    ) -> Tuple[PredictionPlugin, float]:
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def evaluate(self, X: pd.DataFrame, y: pd.Series) -> Tuple[PredictionPlugin, float]:
         for seed in self.seeds:
             self._eval_params(seed, X, y)
         log.info(
@@ -447,6 +456,7 @@ class SimpleOptimizer:
 
 
 class IterativeErrorCorrection:
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
         study: str,
@@ -530,10 +540,12 @@ class IterativeErrorCorrection:
             "regression_seed": reg,
         }
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _setup(self, X: pd.DataFrame) -> pd.DataFrame:
         # Encode the categorical columns
         # Reset internal caches
         X = pd.DataFrame(X).copy()
+        X.columns = X.columns.map(str)
 
         self.mask = self._missing_indicator(X)
 
@@ -590,6 +602,7 @@ class IterativeErrorCorrection:
 
         return X
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _tear_down(self, X: pd.DataFrame) -> pd.DataFrame:
         # Revert the encoding after processing the data
         for col in self.encoders:
@@ -597,18 +610,21 @@ class IterativeErrorCorrection:
 
         return X
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _get_neighbors_for_col(self, col: str) -> list:
         covs = list(self.all_cols)
         covs.remove(col)
 
         return covs
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _is_same_type(self, lhs: str, rhs: str) -> bool:
         ltype = lhs in self.categorical_cols
         rtype = rhs in self.categorical_cols
 
         return ltype == rtype
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _check_similar(self, X: pd.DataFrame, col: str) -> Any:
         if not self.select_lazy:
             return None
@@ -630,6 +646,7 @@ class IterativeErrorCorrection:
 
         return None
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _optimize_model_for_column(self, X: pd.DataFrame, col: str) -> float:
         # BO evaluation for a single column
         if self.mask[col].sum() == 0:
@@ -666,6 +683,7 @@ class IterativeErrorCorrection:
 
         return score
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _optimize(self, X: pd.DataFrame) -> float:
         # BO evaluation to select the best models for each columns
         if self.select_model_by_iteration:
@@ -677,6 +695,7 @@ class IterativeErrorCorrection:
 
         return iteration_score
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _impute_single_column(
         self, X: pd.DataFrame, col: str, train: bool
     ) -> pd.DataFrame:
@@ -723,14 +742,17 @@ class IterativeErrorCorrection:
             random.shuffle(self.imputation_order)
             return self.imputation_order
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _initial_imputation(self, X: pd.DataFrame) -> pd.DataFrame:
         # Use baseline imputer for initial values
         return self.baseline_imputer.fit_transform(X)
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _is_categorical(self, X: pd.DataFrame, col: str) -> bool:
         # Helper for filtering categorical columns
         return len(X[col].unique()) < self.class_threshold
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _missing_indicator(self, X: pd.DataFrame) -> pd.DataFrame:
         # Helper for generating missingness mask
         return pd.DataFrame(
@@ -739,6 +761,7 @@ class IterativeErrorCorrection:
             index=X.index,
         )
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def _fit_transform_inner_optimization(self, X: pd.DataFrame) -> pd.DataFrame:
         log.info("  > HyperImpute using inner optimization")
         best_obj_score = -10e10
@@ -780,6 +803,7 @@ class IterativeErrorCorrection:
 
         return X
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def fit_transform(self, X: pd.DataFrame) -> pd.DataFrame:
         # Run imputation
         X = self._setup(X)
