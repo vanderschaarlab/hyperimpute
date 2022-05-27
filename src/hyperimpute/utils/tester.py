@@ -5,6 +5,7 @@ from typing import Any, Dict, Tuple
 # third party
 import numpy as np
 import pandas as pd
+from pydantic import validate_arguments
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 
@@ -69,10 +70,11 @@ class Eval:
         return evaluate_auc(y_test, y_pred_proba, self.m_metric)
 
 
+@validate_arguments(config=dict(arbitrary_types_allowed=True))
 def evaluate_estimator(
     estimator: Any,
     X: pd.DataFrame,
-    Y: pd.DataFrame,
+    Y: pd.Series,
     n_folds: int = 3,
     metric: str = "aucroc",
     seed: int = 0,
@@ -166,12 +168,13 @@ def evaluate_estimator(
     }
 
 
+@validate_arguments(config=dict(arbitrary_types_allowed=True))
 def score_classification_model(
     estimator: Any,
     X_train: pd.DataFrame,
-    X_test: pd.DataFrame,
+    X_test: pd.Series,
     y_train: pd.DataFrame,
-    y_test: pd.DataFrame,
+    y_test: pd.Series,
 ) -> float:
     model = copy.deepcopy(estimator)
     model.fit(X_train, y_train)
@@ -182,7 +185,7 @@ def score_classification_model(
 def evaluate_regression(
     estimator: Any,
     X: pd.DataFrame,
-    Y: pd.DataFrame,
+    Y: pd.Series,
     n_folds: int = 3,
     seed: int = 0,
     *args: Any,

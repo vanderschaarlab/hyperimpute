@@ -4,6 +4,7 @@ from typing import Any
 
 # third party
 import pandas as pd
+from pydantic import validate_arguments
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.base_plugin as plugin
@@ -37,12 +38,15 @@ class PredictionPlugin(plugin.Plugin):
             "Prediction plugins do not implement the 'transform' method"
         )
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def score(self, X: pd.DataFrame, y: pd.DataFrame, metric: str = "aucroc") -> float:
         raise NotImplementedError(f"Score not implemented for {self.name()}")
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def explain(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         raise NotImplementedError(f"Explainer not implemented for {self.name()}")
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def predict_proba(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         X = cast.to_dataframe(X)
         return pd.DataFrame(self._predict_proba(X, *args, **kwargs))
