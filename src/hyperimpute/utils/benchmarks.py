@@ -9,6 +9,7 @@ from IPython.display import display
 from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
+from pydantic import validate_arguments
 from scipy.stats import wasserstein_distance
 from sklearn.preprocessing import MinMaxScaler
 
@@ -28,6 +29,7 @@ warnings.filterwarnings("ignore")
 imputers = Imputers()
 
 
+@validate_arguments(config=dict(arbitrary_types_allowed=True))
 def ampute(
     x: pd.DataFrame,
     mechanism: str,
@@ -65,12 +67,14 @@ def ampute(
     )
 
 
+@validate_arguments(config=dict(arbitrary_types_allowed=True))
 def scale_data(X: pd.DataFrame) -> pd.DataFrame:
     preproc = MinMaxScaler()
     cols = X.columns
     return pd.DataFrame(preproc.fit_transform(X), columns=cols)
 
 
+@validate_arguments(config=dict(arbitrary_types_allowed=True))
 def simulate_scenarios(
     X: pd.DataFrame, column_limit: int = 8, sample_columns: bool = True
 ) -> pd.DataFrame:
@@ -106,12 +110,13 @@ def ws_score(imputed: pd.DataFrame, ground: pd.DataFrame) -> pd.DataFrame:
     return res
 
 
+@validate_arguments(config=dict(arbitrary_types_allowed=True))
 def benchmark_model(
     name: str,
     model: Any,
-    X: np.ndarray,
-    X_miss: np.ndarray,
-    mask: np.ndarray,
+    X: pd.DataFrame,
+    X_miss: pd.DataFrame,
+    mask: pd.DataFrame,
 ) -> tuple:
     start = time()
 
@@ -126,14 +131,15 @@ def benchmark_model(
 
 def benchmark_standard(
     model_name: str,
-    X: np.ndarray,
-    X_miss: np.ndarray,
-    mask: np.ndarray,
+    X: pd.DataFrame,
+    X_miss: pd.DataFrame,
+    mask: pd.DataFrame,
 ) -> tuple:
     imputer = imputers.get(model_name)
     return benchmark_model(model_name, imputer, X, X_miss, mask)
 
 
+@validate_arguments(config=dict(arbitrary_types_allowed=True))
 def evaluate_dataset(
     name: str,
     evaluated_model: Any,
