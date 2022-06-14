@@ -11,8 +11,8 @@ A library for NaNs and nulls
 
 ![image](https://github.com/vanderschaarlab/hyperimpute/raw/main/docs/arch.png "HyperImpute")
 
-hyperimpute features:
-- :rocket: Dataset imputation
+## HyperImpute features
+- :rocket: Fast and extensible dataset imputation algorithms.
 - :key: New iterative imputation method: HyperImpute.
 - :cyclone: Classic methods like MICE, MissForest, GAIN etc.
 - :fire: Pluginable architecture.
