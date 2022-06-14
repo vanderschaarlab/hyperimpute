@@ -1,7 +1,7 @@
 Welcome to HyperImpute's documentation!
-=================================
+========================================
 
-.. mdinclude:: ../README.md
+.. mdinclude:: README.md
 
 API documentation
 =================
@@ -15,7 +15,7 @@ Imputers
     imputers.rst
 
 Prediction models
-==============
+=================
 .. toctree::
     :glob:
     :maxdepth: 2
@@ -29,11 +29,3 @@ Utils
     :maxdepth: 2
 
     utils.rst
-
-Interfaces
-==============
-.. toctree::
-    :glob:
-    :maxdepth: 2
-
-    core.rst

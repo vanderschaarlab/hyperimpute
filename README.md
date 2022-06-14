@@ -7,11 +7,13 @@ A library for NaNs and nulls
 [![Package Release](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml)
 
 
+![image](https://github.com/vanderschaarlab/hyperimpute/raw/docs/docs/arch.png "HyperImpute")
+
 hyperimpute features:
-- |:rocket:| Dataset imputation
-- |:key:| New iterative imputation method: HyperImpute.
-- |:cyclone:| Classic methods like MICE, MissForest, GAIN etc.
-- |:fire:| Pluginable architecture.
+- :rocket: Dataset imputation
+- :key: New iterative imputation method: HyperImpute.
+- :cyclone: Classic methods like MICE, MissForest, GAIN etc.
+- :fire: Pluginable architecture.
 
 ## :rocket: Installation
 
@@ -147,7 +149,7 @@ compare_models(
  - [Tutorial 2: HyperImpute example](tutorials/experiments_01_hyperimpute_with_naive_search.ipynb)
  - [Tutorial 3: HyperImpute with Hyperband](tutorials/experiments_01_hyperimpute_with_hyperband.ipynb)
 
-## |:zap:| Imputation methods
+## :zap: Imputation methods
 The following table contains the default imputation plugins:
 
 | Strategy | Description| Code |
@@ -167,7 +169,7 @@ The following table contains the default imputation plugins:
 |**MIWAE**|[`MIWAE: Deep Generative Modelling and Imputation of Incomplete Data`](https://arxiv.org/abs/1812.02633)|[`plugin_miwae.py`](src/hyperimpute/plugins/imputers/plugin_miwae.py) |
 
 
-## |:hammer:| Tests
+## :hammer: Tests
 
 Install the testing dependencies using
 ```bash

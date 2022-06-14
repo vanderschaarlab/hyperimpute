@@ -44,6 +44,17 @@ subprocess.run(
          "../src/hyperimpute/",
      ]
  )
+
+emojis = [":rocket:", ":key:", ":cyclone:", ":fire:", ":zap:", ":hammer:", ":boom:"]
+
+with open("../README.md", "rt") as fin:
+    with open("README.md", "wt") as fout:
+        for line in fin:
+            for emoji in emojis:
+                line = line.replace(emoji, "|" + emoji + "|")
+            print(line)
+            fout.write(line)
+
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be

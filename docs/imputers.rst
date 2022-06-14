@@ -11,7 +11,7 @@ Imputers
     MIRACLE <generated/hyperimpute.plugins.imputers.plugin_miracle.rst>
     ICE imputation <generated/hyperimpute.plugins.imputers.plugin_ice.rst>
     MICE imputation <generated/hyperimpute.plugins.imputers.plugin_mice.rst>
-    missForest <generated/hyperimpute.plugins.imputers.plugin_misforest.rst>
+    missForest <generated/hyperimpute.plugins.imputers.plugin_missforest.rst>
     SinkHorn imputation <generated/hyperimpute.plugins.imputers.plugin_sinkhorn.rst>
     SoftImpute <generated/hyperimpute.plugins.imputers.plugin_softimpute.rst>
     MIWAE <generated/hyperimpute.plugins.imputers.plugin_miwae.rst>
