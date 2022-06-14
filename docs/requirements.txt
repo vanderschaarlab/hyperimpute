@@ -5,7 +5,6 @@ pandas
 numpy
 scikit-learn
 cloudpickle
-geomloss
 miracle-imputation
 catboost
 xgboost
