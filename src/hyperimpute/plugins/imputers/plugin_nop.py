@@ -10,7 +10,7 @@ import hyperimpute.plugins.imputers.base as base
 
 
 class NopPlugin(base.ImputerPlugin):
-    """Imputer plugin that doesn't alter the dataset."""
+    """Imputer plugin that doesn't alter the dataset. Placeholder/debugging method"""
 
     def __init__(self, random_state: int = 0) -> None:
         super().__init__()

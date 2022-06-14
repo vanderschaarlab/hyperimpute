@@ -19,34 +19,33 @@ from hyperimpute.utils.distributions import enable_reproducible_results
 class SinkhornImputation(TransformerMixin):
     """Sinkhorn imputation can be used to impute quantitative data and it relies on the idea that two batches extracted randomly from the same dataset should share the same distribution and consists in minimizing optimal transport distances between batches.
 
-    Paper: "Missing Data Imputation using Optimal Transport", Boris Muzellec, Julie Josse, Claire Boyer, Marco Cuturi
-    Original code: https://github.com/BorisMuzellec/MissingDataOT
-
-
     Args:
         eps: float, default=0.01
             Sinkhorn regularization parameter.
-
         lr : float, default = 0.01
             Learning rate.
-
         opt: torch.nn.optim.Optimizer, default=torch.optim.Adam
             Optimizer class to use for fitting.
-
         n_epochs : int, default=15
             Number of gradient updates for each model within a cycle.
-
         batch_size : int, defatul=256
             Size of the batches on which the sinkhorn divergence is evaluated.
-
         n_pairs : int, default=10
             Number of batch pairs used per gradient update.
-
         noise : float, default = 0.1
             Noise used for the missing values initialization.
-
         scaling: float, default=0.9
             Scaling parameter in Sinkhorn iterations
+
+    Example:
+        >>> import numpy as np
+        >>> from hyperimpute.plugins.imputers import Imputers
+        >>> plugin = Imputers().get("sinkhorn")
+        >>> plugin.fit_transform([[1, 1, 1, 1], [np.nan, np.nan, np.nan, np.nan], [1, 2, 2, 1], [2, 2, 2, 2]])
+
+
+    Reference: "Missing Data Imputation using Optimal Transport", Boris Muzellec, Julie Josse, Claire Boyer, Marco Cuturi
+    Original code: https://github.com/BorisMuzellec/MissingDataOT
     """
 
     def __init__(
