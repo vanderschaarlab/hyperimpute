@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 
 archive.ics.uci.edu
+generated
+_build
