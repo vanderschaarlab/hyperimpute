@@ -131,3 +131,4 @@ dmypy.json
 archive.ics.uci.edu
 generated
 _build
+docs/README.md
