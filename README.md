@@ -1,23 +1,18 @@
-<h2 align="center">
-  hyperimpute
-</h2>
+# HyperImpute
+A library for NaNs and nulls
 
-<h4 align="center">
-    A library for NaNs and nulls
-</h4>
-
-<div align="center">
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
 [![CodeQL](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml)
 [![Package Release](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml)
+[![Documentation Status](https://readthedocs.org/projects/hyperimpute/badge/?version=latest)](https://hyperimpute.readthedocs.io/en/latest/?badge=latest)
 
-</div>
 
-Dataset imputation is the process of replacing missing data with substituted values.
+
+![image](https://github.com/vanderschaarlab/hyperimpute/raw/main/docs/arch.png "HyperImpute")
 
 hyperimpute features:
+- :rocket: Dataset imputation
 - :key: New iterative imputation method: HyperImpute.
 - :cyclone: Classic methods like MICE, MissForest, GAIN etc.
 - :fire: Pluginable architecture.

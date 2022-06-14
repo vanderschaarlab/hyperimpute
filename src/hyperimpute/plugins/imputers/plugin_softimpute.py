@@ -22,8 +22,6 @@ class SoftImpute(TransformerMixin):
     """The SoftImpute algorithm fits a low-rank matrix approximation to a matrix with missing values via nuclear-norm regularization. The algorithm can be used to impute quantitative data.
     To calibrate the the nuclear-norm regularization parameter(shrink_lambda), we perform cross-validation(_cv_softimpute)
 
-    Paper: "Spectral Regularization Algorithms for Learning Large Incomplete Matrices", by Mazumder, Hastie, and Tibshirani.
-
     Args:
         maxit: int, default=500
             maximum number of imputation rounds to perform.
@@ -36,6 +34,14 @@ class SoftImpute(TransformerMixin):
         cv_len: int, default=15
             the length of the grid on which the cross-validation is performed.
 
+    Example:
+        >>> import numpy as np
+        >>> from hyperimpute.plugins.imputers import Imputers
+        >>> plugin = Imputers().get("softimpute")
+        >>> plugin.fit_transform([[1, 1, 1, 1], [np.nan, np.nan, np.nan, np.nan], [1, 2, 2, 1], [2, 2, 2, 2]])
+
+
+    Reference: "Spectral Regularization Algorithms for Learning Large Incomplete Matrices", by Mazumder, Hastie, and Tibshirani.
     """
 
     def __init__(

@@ -62,6 +62,25 @@ class NpEncoder(json.JSONEncoder):
 
 
 class HyperbandOptimizer:
+    """Optimization helper based on HyperBand.
+
+    Args:
+        name: str
+            ID
+        category: str
+            classification/regression. Impacts the objective function
+        classifier_seed: list
+            List of classification methods to evaluate. Used when category = "classifier"
+        regression_seed: list
+            List of regression methods to evaluate. Used when category = "regression"
+        max_iter: int
+            maximum iterations per configuration
+        eta: int
+            configuration downsampling rate
+        random_state: int
+            random seed
+    """
+
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
@@ -241,6 +260,23 @@ class HyperbandOptimizer:
 
 
 class BayesianOptimizer:
+    """Optimization helper based on Bayesian Optimization.
+
+    Args:
+        name: str
+            ID
+        category: str
+            classification/regression. Impacts the objective function
+        classifier_seed: list
+            List of classification methods to evaluate. Used when category = "classifier"
+        regression_seed: list
+            List of regression methods to evaluate. Used when category = "regression"
+        patience: int
+            maximum iterations without any gain
+        random_state: int
+            random seed
+    """
+
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
@@ -374,6 +410,21 @@ class BayesianOptimizer:
 
 
 class SimpleOptimizer:
+    """Optimization helper based on default args evaluation.
+
+    Args:
+        name: str
+            ID
+        category: str
+            classification/regression. Impacts the objective function
+        classifier_seed: list
+            List of classification methods to evaluate. Used when category = "classifier"
+        regression_seed: list
+            List of regression methods to evaluate. Used when category = "regression"
+        random_state: int
+            random seed
+    """
+
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
@@ -456,6 +507,39 @@ class SimpleOptimizer:
 
 
 class IterativeErrorCorrection:
+    """HyperImpute core runner.
+
+    Args:
+        study: str
+            ID
+        classifier_seed: list
+            List of classification methods to evaluate. Used when category = "classifier"
+        regression_seed: list
+            List of regression methods to evaluate. Used when category = "regression"
+        optimizer: str
+            Which hyperparam search strategy to use: hyperband, bayesian, simple.
+        baseline_imputer: str
+            baseline imputation method.
+        class_threshold: int
+            Maximum unique values for categoricals.
+        optimize_thresh: int
+            How many samples to use for hyperparam search
+        optimize_thresh_upper: int
+            If the available data is bigger than this value, use just the SimpleOptimizer.
+        n_inner_iter: int
+            Maximum number of imputation iterations.
+        select_model_by_column: bool.
+            If False, reuse the first model selected in the current iteration for all columns. Else, search the model for each column.
+        select_model_by_iteration: bool.
+            If False, reuse the models selected in the first iteration. Otherwise, refresh the models on each iteration.
+        select_lazy: bool.
+            If True, if there is a trend towards a certain model architecture, the loop reuses than for all columns, instead of calling the optimizer.
+        inner_loop_hook: Callable.
+            Debug hook, called before each iteration.
+        random_state: int.
+            random seed.
+    """
+
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
@@ -821,23 +905,43 @@ class IterativeErrorCorrection:
 class HyperImputePlugin(base.ImputerPlugin):
     """HyperImpute strategy.
 
-    Paper: "HyperImpute: Generalized Iterative Imputation with Automatic Model Selection"
-
 
     Args:
-        classifier_seed: list. List of ClassifierPlugin names for the search pool.
-        regression_seed: list. List of RegressionPlugin names for the search pool.
-        imputation_order: int. 0 - ascending, 1 - descending, 2 - random
-        baseline_imputer: int. 0 - mean, 1 - median, 2- most_frequent
-        optimizer: str. Options: simple, hyperband, bayesian
-        class_threshold: int. Maximum number of unique items in a categorical column.
-        optimize_thresh: int. The number of subsamples used for the model search.
-        n_inner_iter: int. number of imputation iterations.
-        random_state: int. random seed.
-        select_model_by_column: bool. If False, reuse the first model selected in the current iteration for all columns. Else, search the model for each column.
-        select_model_by_iteration: bool. If False, reuse the models selected in the first iteration. Otherwise, refresh the models on each iteration.
-        select_lazy: bool. If True, if there is a trend towards a certain model architecture, the loop reuses than for all columns, instead of calling the optimizer.
-        inner_loop_hook: Callable. Debug hook, called before each iteration.
+        classifier_seed: list.
+            List of ClassifierPlugin names for the search pool.
+        regression_seed: list.
+            List of RegressionPlugin names for the search pool.
+        imputation_order: int.
+            0 - ascending, 1 - descending, 2 - random
+        baseline_imputer: int.
+            0 - mean, 1 - median, 2- most_frequent
+        optimizer: str.
+            Hyperparam search strategy. Options: simple, hyperband, bayesian
+        class_threshold: int.
+            Maximum number of unique items in a categorical column.
+        optimize_thresh: int.
+            The number of subsamples used for the model search.
+        n_inner_iter: int.
+            number of imputation iterations.
+        select_model_by_column: bool.
+            If False, reuse the first model selected in the current iteration for all columns. Else, search the model for each column.
+        select_model_by_iteration: bool.
+            If False, reuse the models selected in the first iteration. Otherwise, refresh the models on each iteration.
+        select_lazy: bool.
+            If True, if there is a trend towards a certain model architecture, the loop reuses than for all columns, instead of calling the optimizer.
+        inner_loop_hook: Callable.
+            Debug hook, called before each iteration.
+        random_state: int.
+            random seed.
+
+    Example:
+        >>> import numpy as np
+        >>> from hyperimpute.plugins.imputers import Imputers
+        >>> plugin = Imputers().get("hyperimpute")
+        >>> plugin.fit_transform([[1, 1, 1, 1], [np.nan, np.nan, np.nan, np.nan], [1, 2, 2, 1], [2, 2, 2, 2]])
+
+
+    Reference: "HyperImpute: Generalized Iterative Imputation with Automatic Model Selection"
     """
 
     initial_strategy_vals = ["mean", "median", "most_frequent"]
