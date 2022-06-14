@@ -15,8 +15,7 @@ from hyperimpute.plugins.imputers.plugin_median import MedianPlugin
 
 class MiraclePlugin(base.ImputerPlugin):
     """MIRACLE (Missing data Imputation Refinement And Causal LEarning)
-
-    Paper: "MIRACLE: Causally-Aware Imputation via Learning Missing Data Mechanisms", Trent Kyono, Yao Zhang, Alexis Bellot, Mihaela van der Schaar
+    MIRACLE iteratively refines the imputation of a baseline by simultaneously modeling the missingness generating mechanism and encouraging imputation to be consistent with the causal structure of the data.
 
 
     Example:
@@ -24,7 +23,8 @@ class MiraclePlugin(base.ImputerPlugin):
         >>> from hyperimpute.plugins.imputers import Imputers
         >>> plugin = Imputers().get("miracle")
         >>> plugin.fit_transform([[1, 1, 1, 1], [np.nan, np.nan, np.nan, np.nan], [1, 2, 2, 1], [2, 2, 2, 2]])
-                  0         1         2         3
+
+    Reference: "MIRACLE: Causally-Aware Imputation via Learning Missing Data Mechanisms", Trent Kyono, Yao Zhang, Alexis Bellot, Mihaela van der Schaar
     """
 
     def __init__(

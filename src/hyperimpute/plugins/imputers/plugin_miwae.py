@@ -25,7 +25,29 @@ def weights_init(layer: Any) -> None:
 class MIWAEPlugin(base.ImputerPlugin):
     """MIWAE imputation plugin
 
-    Paper: "MIWAE: Deep Generative Modelling and Imputation of Incomplete Data", Pierre-Alexandre Mattei, Jes Frellsen
+    Args:
+        n_epochs: int
+            Number of training iterations
+        batch_size: int
+            Batch size
+        latent_size: int
+            dimension of the latent space
+        n_hidden: int
+            number of hidden units
+        K: int
+            number of IS during training
+        random_state: int
+            random seed
+
+
+    Example:
+        >>> import numpy as np
+        >>> from hyperimpute.plugins.imputers import Imputers
+        >>> plugin = Imputers().get("miwae")
+        >>> plugin.fit_transform([[1, 1, 1, 1], [np.nan, np.nan, np.nan, np.nan], [1, 2, 2, 1], [2, 2, 2, 2]])
+
+
+    Reference: "MIWAE: Deep Generative Modelling and Imputation of Incomplete Data", Pierre-Alexandre Mattei, Jes Frellsen
     Original code: https://github.com/pamattei/miwae
     """
 
@@ -36,6 +58,7 @@ class MIWAEPlugin(base.ImputerPlugin):
         latent_size: int = 1,
         n_hidden: int = 1,
         random_state: int = 0,
+        K: int = 20,
     ) -> None:
         super().__init__()
 
@@ -45,7 +68,7 @@ class MIWAEPlugin(base.ImputerPlugin):
         self.batch_size = batch_size  # batch size
         self.n_hidden = n_hidden  # number of hidden units in (same for all MLPs)
         self.latent_size = latent_size  # dimension of the latent space
-        self.K = 20  # number of IS during training
+        self.K = K  # number of IS during training
 
     @staticmethod
     def name() -> str:
