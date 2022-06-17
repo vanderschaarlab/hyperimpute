@@ -181,3 +181,18 @@ The tests can be executed using
 ```bash
 pytest -vsx
 ```
+## Citing
+
+If you use this code, please cite the associated paper:
+
+```
+@article{Jarrett2022HyperImpute,
+  doi = {10.48550/ARXIV.2206.07769},
+  url = {https://arxiv.org/abs/2206.07769},
+  author = {Jarrett, Daniel and Cebere, Bogdan and Liu, Tennison and Curth, Alicia and van der Schaar, Mihaela},
+  keywords = {Machine Learning (stat.ML), Machine Learning (cs.LG), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {HyperImpute: Generalized Iterative Imputation with Automatic Model Selection},
+  year = {2022},
+  booktitle={39th International Conference on Machine Learning},
+}
+```
