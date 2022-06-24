@@ -42,7 +42,7 @@ class MiraclePlugin(base.ImputerPlugin):
         seed_imputation: str = "mean",
         random_state: int = 0,
     ) -> None:
-        super().__init__()
+        super().__init__(random_state=random_state)
 
         if seed_imputation not in [
             "mean",

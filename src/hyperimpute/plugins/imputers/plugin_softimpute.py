@@ -287,7 +287,7 @@ class SoftImputePlugin(base.ImputerPlugin):
         cv_len: int = 3,
         random_state: int = 0,
     ) -> None:
-        super().__init__()
+        super().__init__(random_state=random_state)
 
         self.maxit = maxit
         self.convergence_threshold = convergence_threshold

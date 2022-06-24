@@ -27,7 +27,7 @@ class MeanPlugin(base.ImputerPlugin):
         self,
         random_state: int = 0,
     ) -> None:
-        super().__init__()
+        super().__init__(random_state=random_state)
 
         self._model = SimpleImputer(strategy="mean")
 

@@ -23,8 +23,10 @@ class ImputerPlugin(_BaseImputer, plugin.Plugin):
     If any method implementation is missing, the class constructor will fail.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, random_state: int = 0) -> None:
         super().__init__()
+
+        self.random_state = random_state
 
     @staticmethod
     def type() -> str:

@@ -50,7 +50,7 @@ class SKLearnMissForestPlugin(base.ImputerPlugin):
         bootstrap: bool = True,
         random_state: int = 0,
     ) -> None:
-        super().__init__()
+        super().__init__(random_state=random_state)
 
         self.n_estimators = n_estimators
         self.max_iter = max_iter

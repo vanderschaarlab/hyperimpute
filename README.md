@@ -1,13 +1,13 @@
 # HyperImpute
 A library for NaNs and nulls
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
 [![CodeQL](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml)
 [![Package Release](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml)
 [![Documentation Status](https://readthedocs.org/projects/hyperimpute/badge/?version=latest)](https://hyperimpute.readthedocs.io/en/latest/?badge=latest)
 [![arXiv](https://img.shields.io/badge/arXiv-2206.07769-b31b1b.svg)](https://arxiv.org/abs/2206.07769)
-
+[![Test In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1zGm4VeXsJ-0x6A5_icnknE7mbJ0knUig?usp=sharing)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 
 ![image](https://github.com/vanderschaarlab/hyperimpute/raw/main/docs/arch.png "HyperImpute")
