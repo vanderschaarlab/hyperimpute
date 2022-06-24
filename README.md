@@ -1,5 +1,4 @@
 # HyperImpute
-A library for NaNs and nulls
 
 [![Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
 [![CodeQL](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml)
@@ -12,10 +11,16 @@ A library for NaNs and nulls
 
 ![image](https://github.com/vanderschaarlab/hyperimpute/raw/main/docs/arch.png "HyperImpute")
 
+
+A library for NaNs and nulls. 
+
+HyperImpute simplifies the process of selecting an data imputation algorithm for your ML pipelines. 
+It includes various novel algorithms for missing data and is compatible with [sklearn](https://scikit-learn.org/stable/).
+
 ## HyperImpute features
-- :rocket: Fast and extensible dataset imputation algorithms.
+- :rocket: Fast and extensible dataset imputation algorithms, compatible with sklearn.
 - :key: New iterative imputation method: HyperImpute.
-- :cyclone: Classic methods like MICE, MissForest, GAIN etc.
+- :cyclone: Classic methods: MICE, MissForest, GAIN, MIRACLE, MIWAE, Sinkhorn, SoftImpute, etc.
 - :fire: Pluginable architecture.
 
 ## :rocket: Installation
