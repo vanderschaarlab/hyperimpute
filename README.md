@@ -1,4 +1,4 @@
-# HyperImpute
+# HyperImpute - A library for NaNs and nulls. 
 
 [![Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
 [![CodeQL](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml)
@@ -12,9 +12,8 @@
 ![image](https://github.com/vanderschaarlab/hyperimpute/raw/main/docs/arch.png "HyperImpute")
 
 
-A library for NaNs and nulls. 
 
-HyperImpute simplifies selecting a data imputation algorithm for your ML pipelines.
+HyperImpute simplifies the selection process of a data imputation algorithm for your ML pipelines.
 It includes various novel algorithms for missing data and is compatible with [sklearn](https://scikit-learn.org/stable/).
 
 
