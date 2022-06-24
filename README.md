@@ -14,8 +14,9 @@
 
 A library for NaNs and nulls. 
 
-HyperImpute simplifies the process of selecting an data imputation algorithm for your ML pipelines. 
+HyperImpute simplifies selecting a data imputation algorithm for your ML pipelines.
 It includes various novel algorithms for missing data and is compatible with [sklearn](https://scikit-learn.org/stable/).
+
 
 ## HyperImpute features
 - :rocket: Fast and extensible dataset imputation algorithms, compatible with sklearn.
