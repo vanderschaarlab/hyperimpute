@@ -13,7 +13,7 @@ class NopPlugin(base.ImputerPlugin):
     """Imputer plugin that doesn't alter the dataset. Placeholder/debugging method"""
 
     def __init__(self, random_state: int = 0) -> None:
-        super().__init__()
+        super().__init__(random_state=random_state)
 
     @staticmethod
     def name() -> str:

@@ -147,7 +147,7 @@ class SinkhornPlugin(base.ImputerPlugin):
         scaling: float = 0.9,
         random_state: int = 0,
     ) -> None:
-        super().__init__()
+        super().__init__(random_state=random_state)
 
         enable_reproducible_results(random_state)
 

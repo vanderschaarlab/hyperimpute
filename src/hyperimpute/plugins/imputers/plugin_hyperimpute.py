@@ -964,7 +964,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
     ) -> None:
-        super().__init__()
+        super().__init__(random_state=random_state)
 
         enable_reproducible_results(random_state)
         self.classifier_seed = classifier_seed

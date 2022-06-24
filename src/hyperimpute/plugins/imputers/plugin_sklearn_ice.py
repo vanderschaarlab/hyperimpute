@@ -41,7 +41,7 @@ class SKLearnIterativeChainedEquationsPlugin(base.ImputerPlugin):
         imputation_order: int = 0,
         random_state: int = 0,
     ) -> None:
-        super().__init__()
+        super().__init__(random_state=random_state)
 
         self.max_iter = max_iter
         self.tol = tol
