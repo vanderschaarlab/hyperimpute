@@ -462,9 +462,7 @@ class SimpleOptimizer:
     def _eval_params(
         self, model_name: str, X: pd.DataFrame, y: pd.Series, **params: Any
     ) -> float:
-        model = self.predictions.get(
-            model_name, random_state=self.random_state, **params
-        )
+        model = self.predictions.get(model_name, **params)
         for n_folds in [2, 1]:
             try:
                 if self.category == "regression":
@@ -494,7 +492,7 @@ class SimpleOptimizer:
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def evaluate(self, X: pd.DataFrame, y: pd.Series) -> Tuple[PredictionPlugin, float]:
         for seed in self.seeds:
-            self._eval_params(seed, X, y)
+            self._eval_params(seed, X, y, random_state=self.random_state)
         log.info(
             f"     >>> Column {self.name} <-- score {self.candidate['score']} <-- Model {self.candidate['name']}"
         )
