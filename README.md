@@ -1,4 +1,4 @@
-# HyperImpute - A library for NaNs and nulls. 
+# HyperImpute - A library for NaNs and nulls.
 
 [![Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
 [![CodeQL](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml)
@@ -51,8 +51,11 @@ from hyperimpute.plugins.imputers import Imputers
 
 X = pd.DataFrame([[1, 1, 1, 1], [4, 5, np.nan, np.nan], [3, 3, 9, 9], [2, 2, 2, 2]])
 
-plugin = Imputers().get("miracle")
+method = "gain"
+
+plugin = Imputers().get(method)
 out = plugin.fit_transform(X.copy())
+
 print(method, out)
 ```
 Specify the baseline models for HyperImpute
