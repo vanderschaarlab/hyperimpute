@@ -1,7 +1,7 @@
 # HyperImpute - A library for NaNs and nulls.
 
 [![Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
-[![CodeQL](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/codeql-analysis.yml)
+[![Downloads](https://img.shields.io/pypi/dd/tenseal)](https://pypi.org/project/tenseal/)
 [![Package Release](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml)
 [![Documentation Status](https://readthedocs.org/projects/hyperimpute/badge/?version=latest)](https://hyperimpute.readthedocs.io/en/latest/?badge=latest)
 [![arXiv](https://img.shields.io/badge/arXiv-2206.07769-b31b1b.svg)](https://arxiv.org/abs/2206.07769)
@@ -157,8 +157,7 @@ compare_models(
 ## 📓 Tutorials
  - [Tutorial 0: Imputation basics](tutorials/tutorial_00_imputer_plugins.ipynb)
  - [Tutorial 1: AutoML for imputation](tutorials/tutorial_01_bayesian_optimization_over_imputers.ipynb)
- - [Tutorial 2: HyperImpute example](tutorials/experiments_01_hyperimpute_with_naive_search.ipynb)
- - [Tutorial 3: HyperImpute with Hyperband](tutorials/experiments_01_hyperimpute_with_hyperband.ipynb)
+ - [Tutorial 2: Benchmark](tutorials/tutorial_02_benchmark_models.ipynb)
 
 ## :zap: Imputation methods
 The following table contains the default imputation plugins:
