@@ -1,7 +1,7 @@
 # HyperImpute - A library for NaNs and nulls.
 
 [![Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
-[![Downloads](https://img.shields.io/pypi/dd/tenseal)](https://pypi.org/project/tenseal/)
+[![Downloads](https://img.shields.io/pypi/dd/hyperimpute)](https://pypi.org/project/hyperimpute/)
 [![Package Release](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml)
 [![Documentation Status](https://readthedocs.org/projects/hyperimpute/badge/?version=latest)](https://hyperimpute.readthedocs.io/en/latest/?badge=latest)
 [![arXiv](https://img.shields.io/badge/arXiv-2206.07769-b31b1b.svg)](https://arxiv.org/abs/2206.07769)
