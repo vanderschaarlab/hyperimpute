@@ -6,7 +6,7 @@ from typing import Any, Dict, Tuple
 import numpy as np
 import pandas as pd
 from pydantic import validate_arguments
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 
 # hyperimpute absolute
@@ -196,7 +196,7 @@ def evaluate_regression(
 
     log.debug(f"evaluate_estimator shape x:{X.shape} y:{Y.shape}")
 
-    metrics = ["rmse", "wnd"]
+    metrics = ["rmse", "wnd", "r2"]
     metrics_ = {}
 
     for m in metrics:
@@ -215,14 +215,19 @@ def evaluate_regression(
 
         preds = model.predict(X_test)
 
-        return mean_squared_error(Y_test, preds), evaluate_wnd(preds, Y_test)
+        return (
+            mean_squared_error(Y_test, preds),
+            evaluate_wnd(preds, Y_test),
+            r2_score(Y_test, preds),
+        )
 
     if n_folds == 1:
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=seed)
 
-        rmse, wnd = eval_iteration(X_train, X_test, Y_train, Y_test)
+        rmse, wnd, r2 = eval_iteration(X_train, X_test, Y_train, Y_test)
         metrics_["rmse"][indx] = rmse
         metrics_["wnd"][indx] = wnd
+        metrics_["r2"][indx] = r2
     else:
         skf = KFold(n_splits=n_folds, shuffle=True, random_state=seed)
 
@@ -233,22 +238,26 @@ def evaluate_regression(
             X_test = X.loc[X.index[test_index]]
             Y_test = Y.loc[Y.index[test_index]]
 
-            rmse, wnd = eval_iteration(X_train, X_test, Y_train, Y_test)
+            rmse, wnd, r2 = eval_iteration(X_train, X_test, Y_train, Y_test)
             metrics_["rmse"][indx] = rmse
             metrics_["wnd"][indx] = wnd
+            metrics_["r2"][indx] = r2
 
             indx += 1
 
     output_clf_rmse = generate_score(metrics_["rmse"])
     output_clf_wnd = generate_score(metrics_["wnd"])
+    output_clf_r2 = generate_score(metrics_["r2"])
 
     return {
         "clf": {
             "rmse": output_clf_rmse,
             "wnd": output_clf_wnd,
+            "r2": output_clf_r2,
         },
         "str": {
             "rmse": print_score(output_clf_rmse),
             "wnd": print_score(output_clf_wnd),
+            "r2": print_score(output_clf_r2),
         },
     }

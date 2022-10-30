@@ -3,6 +3,7 @@ import multiprocessing
 from typing import Any, List, Optional
 
 # third party
+import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
 
@@ -130,7 +131,8 @@ class XGBoostPlugin(base.ClassifierPlugin):
         ]
 
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "XGBoostPlugin":
-        self.model.fit(X, *args, **kwargs)
+        y = np.asarray(args[0])
+        self.model.fit(X, y, **kwargs)
         return self
 
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
