@@ -11,6 +11,7 @@ from xgboost import XGBClassifier
 from hyperimpute.plugins.core.device import DEVICE
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.classifiers.base as base
+from sklearn.preprocessing import LabelEncoder
 
 
 class XGBoostPlugin(base.ClassifierPlugin):
@@ -132,11 +133,14 @@ class XGBoostPlugin(base.ClassifierPlugin):
 
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "XGBoostPlugin":
         y = np.asarray(args[0])
+        self.encoder = LabelEncoder()
+
+        y = self.encoder.fit_transform(y)
         self.model.fit(X, y, **kwargs)
         return self
 
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
-        return self.model.predict(X, *args, **kwargs)
+        return self.encoder.inverse_transform(self.model.predict(X, *args, **kwargs))
 
     def _predict_proba(
         self, X: pd.DataFrame, *args: Any, **kwargs: Any
