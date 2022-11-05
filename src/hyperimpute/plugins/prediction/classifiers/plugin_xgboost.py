@@ -134,7 +134,6 @@ class XGBoostPlugin(base.ClassifierPlugin):
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "XGBoostPlugin":
         y = np.asarray(args[0])
         self.encoder = LabelEncoder()
-
         y = self.encoder.fit_transform(y)
         self.model.fit(X, y, **kwargs)
         return self
