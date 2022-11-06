@@ -5,13 +5,12 @@ from typing import Any, List, Optional
 # third party
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 from xgboost import XGBClassifier
 
 # hyperimpute absolute
-from hyperimpute.plugins.core.device import DEVICE
 import hyperimpute.plugins.core.params as params
 import hyperimpute.plugins.prediction.classifiers.base as base
-from sklearn.preprocessing import LabelEncoder
 
 
 class XGBoostPlugin(base.ClassifierPlugin):
@@ -83,12 +82,6 @@ class XGBoostPlugin(base.ClassifierPlugin):
             n_estimators = int(hyperparam_search_iterations)
 
         gpu_args = {}
-
-        if DEVICE == "cuda":
-            gpu_args = {
-                "tree_method": "gpu_hist",
-                "predictor": "gpu_predictor",
-            }
 
         self.model = XGBClassifier(
             n_estimators=n_estimators,
