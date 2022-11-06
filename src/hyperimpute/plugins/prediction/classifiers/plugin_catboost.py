@@ -69,7 +69,7 @@ class CatBoostPlugin(base.ClassifierPlugin):
             depth=depth,
             logging_level="Silent",
             allow_writing_files=False,
-            used_ram_limit="6gb",
+            used_ram_limit="20gb",
             n_estimators=n_estimators,
             grow_policy=CatBoostPlugin.grow_policies[grow_policy],
             random_state=random_state,

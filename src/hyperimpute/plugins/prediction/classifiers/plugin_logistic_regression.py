@@ -43,10 +43,10 @@ class LogisticRegressionPlugin(base.ClassifierPlugin):
     def __init__(
         self,
         C: float = 1.0,
-        solver: int = 2,
+        solver: int = 1,
         multi_class: int = 0,
         class_weight: int = 0,
-        max_iter: int = 100,
+        max_iter: int = 10000,
         penalty: str = "l2",
         model: Any = None,
         random_state: int = 0,
