@@ -48,6 +48,8 @@ class CatBoostPlugin(base.ClassifierPlugin):
         model: Any = None,
         hyperparam_search_iterations: Optional[int] = None,
         random_state: int = 0,
+        l2_leaf_reg: float = 3,
+        learning_rate: float = 1e-3,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
@@ -71,6 +73,8 @@ class CatBoostPlugin(base.ClassifierPlugin):
             allow_writing_files=False,
             used_ram_limit="20gb",
             n_estimators=n_estimators,
+            l2_leaf_reg=l2_leaf_reg,
+            learning_rate=learning_rate,
             grow_policy=CatBoostPlugin.grow_policies[grow_policy],
             random_state=random_state,
             **gpu_args,
@@ -85,6 +89,8 @@ class CatBoostPlugin(base.ClassifierPlugin):
         return [
             params.Integer("depth", 1, 5),
             params.Integer("n_estimators", 10, 100),
+            params.Categorical("learning_rate", [1e-4, 1e-3, 1e-2]),
+            params.Float("l2_leaf_reg", 0, 5),
             params.Integer("grow_policy", 0, len(CatBoostPlugin.grow_policies) - 1),
         ]
 

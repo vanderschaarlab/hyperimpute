@@ -39,6 +39,8 @@ class CatBoostRegressorPlugin(base.RegressionPlugin):
         n_estimators: Optional[int] = 10,
         hyperparam_search_iterations: Optional[int] = None,
         random_state: int = 0,
+        l2_leaf_reg: float = 3,
+        learning_rate: float = 1e-3,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
@@ -60,6 +62,8 @@ class CatBoostRegressorPlugin(base.RegressionPlugin):
             n_estimators=n_estimators,
             grow_policy=CatBoostRegressorPlugin.grow_policies[grow_policy],
             random_state=random_state,
+            l2_leaf_reg=l2_leaf_reg,
+            learning_rate=learning_rate,
             **gpu_args,
         )
 
@@ -72,6 +76,8 @@ class CatBoostRegressorPlugin(base.RegressionPlugin):
         return [
             params.Integer("depth", 1, 5),
             params.Integer("n_estimators", 10, 100),
+            params.Categorical("learning_rate", [1e-4, 1e-3, 1e-2]),
+            params.Float("l2_leaf_reg", 0, 5),
             params.Integer(
                 "grow_policy", 0, len(CatBoostRegressorPlugin.grow_policies) - 1
             ),
