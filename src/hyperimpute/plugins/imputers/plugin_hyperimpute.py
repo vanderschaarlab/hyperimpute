@@ -176,7 +176,7 @@ class HyperbandOptimizer:
             try:
                 if self.category == "regression":
                     out = evaluate_regression(model, X, y, n_folds=n_folds)
-                    score = -(out["clf"]["rmse"][0] + out["clf"]["wnd"][0])
+                    score = out["clf"]["r2"][0]
                 else:
                     out = evaluate_estimator(model, X, y, n_folds=n_folds)
                     score = out["clf"]["aucroc"][0]
@@ -285,7 +285,7 @@ class BayesianOptimizer:
         classifier_seed: list,
         regression_seed: list,
         patience: int = 10,
-        inner_patience: int = 4,
+        inner_patience: int = 5,
         random_state: int = 0,
     ):
         self.name = name
@@ -302,17 +302,43 @@ class BayesianOptimizer:
         self.patience = patience
         self.inner_patience = inner_patience
 
-        for seed in self.seeds:
-            self.bo_studies[seed] = create_study(
-                study_name=f"{self.name}_imputer_evaluation_{seed}",
-                direction="maximize",
-                load_if_exists=False,
-                patience=self.patience,
-            )
+        # for seed in self.seeds:
+        #    self.bo_studies[seed] = create_study(
+        #        study_name=f"{self.name}_imputer_evaluation_{seed}",
+        #        direction="maximize",
+        #        load_if_exists=False,
+        #        patience=self.patience,
+        #    )
 
         self.best_score = self.failure_score
         self.best_candidate = self.seeds[0]
         self.best_params: dict = {}
+
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def evaluate_plugin_args(
+        self,
+        plugin_name: str,
+        plugin_args: dict,
+        X: pd.DataFrame,
+        y: pd.Series,
+    ) -> float:
+        plugin = Predictions(category=self.category).get_type(plugin_name)
+
+        model = plugin(random_state=self.random_state, **plugin_args)
+        for n_folds in [2, 1]:
+            try:
+                if self.category == "regression":
+                    out = evaluate_regression(model, X, y, n_folds=n_folds)
+                    score = out["clf"]["r2"][0]
+                else:
+                    out = evaluate_estimator(model, X, y, n_folds=n_folds)
+                    score = out["clf"]["aucroc"][0]
+                break
+            except BaseException as e:
+                print("failed to evaluate", e)
+                score = self.failure_score
+
+        return score
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def evaluate_plugin(
@@ -326,23 +352,16 @@ class BayesianOptimizer:
         plugin = Predictions(category=self.category).get_type(plugin_name)
 
         early_stopping_patience: int = 0
-        study, pruner = self.bo_studies[plugin_name]
+        # study, pruner = self.bo_studies[plugin_name]
+        study, pruner = create_study(
+            study_name=f"{self.name}_imputer_evaluation_{plugin_name}",
+            direction="maximize",
+            load_if_exists=False,
+            patience=self.patience,
+        )
 
         def evaluate_args(**kwargs: Any) -> float:
-            model = plugin(random_state=self.random_state, **kwargs)
-            for n_folds in [2, 1]:
-                try:
-                    if self.category == "regression":
-                        out = evaluate_regression(model, X, y, n_folds=n_folds)
-                        score = -out["clf"]["rmse"][0]
-                    else:
-                        out = evaluate_estimator(model, X, y, n_folds=n_folds)
-                        score = out["clf"]["aucroc"][0]
-                    break
-                except BaseException:
-                    score = self.failure_score
-
-            return score
+            return self.evaluate_plugin_args(plugin_name, kwargs, X, y)
 
         baseline_score = evaluate_args()
         pruner.report_score(baseline_score)
@@ -380,7 +399,15 @@ class BayesianOptimizer:
     def evaluate(
         self, X_train: pd.DataFrame, y_train: pd.Series
     ) -> Tuple[PredictionPlugin, float]:
-        best_score = self.failure_score
+
+        old_best = self.best_score
+        self.best_score = self.evaluate_plugin_args(
+            self.best_candidate, self.best_params, X_train, y_train
+        )
+        best_score = self.best_score
+        log.info(
+            f"[Evaluate {self.name}] previous config new score = {self.best_score}. old score = {old_best}"
+        )
 
         if self.category == "classifier":
             mapped_labels = sorted(y_train.unique())
@@ -467,7 +494,7 @@ class SimpleOptimizer:
             try:
                 if self.category == "regression":
                     out = evaluate_regression(model, X, y, n_folds=n_folds)
-                    score = -out["clf"]["rmse"][0]
+                    score = out["clf"]["r2"][0]
                 else:
                     out = evaluate_estimator(model, X, y, n_folds=n_folds)
                     score = out["clf"]["aucroc"][0]
@@ -646,8 +673,8 @@ class IterativeErrorCorrection:
         for col in X.columns:
             avail_cnt = X[col].notna().sum()
             optimizer = self.optimizer
-            if avail_cnt > self.optimize_thresh_upper:
-                optimizer = SimpleOptimizer
+            # if avail_cnt > self.optimize_thresh_upper:
+            #    optimizer = SimpleOptimizer
 
             if self._is_categorical(X, col):
                 self.categorical_cols.append(col)
@@ -953,13 +980,13 @@ class HyperImputePlugin(base.ImputerPlugin):
         baseline_imputer: int = 0,  # initial_strategy_vals
         optimizer: str = "simple",
         class_threshold: int = 5,
-        optimize_thresh: int = 1000,
-        n_inner_iter: int = 50,
+        optimize_thresh: int = 5000,
+        n_inner_iter: int = 40,
         random_state: int = 0,
         select_model_by_column: bool = True,
         select_model_by_iteration: bool = True,
-        select_patience: int = 3,
-        select_lazy: bool = True,
+        select_patience: int = 5,
+        select_lazy: bool = False,
         inner_loop_hook: Optional[Callable] = None,
     ) -> None:
         super().__init__(random_state=random_state)

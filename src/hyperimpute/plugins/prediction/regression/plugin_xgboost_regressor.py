@@ -62,7 +62,7 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
         reg_lambda: Optional[float] = None,
         reg_alpha: Optional[float] = None,
         n_estimators: int = 100,
-        max_depth: Optional[int] = 6,
+        max_depth: Optional[int] = 3,
         lr: Optional[float] = None,
         random_state: int = 0,
         hyperparam_search_iterations: Optional[int] = None,
@@ -101,8 +101,8 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
         return [
             params.Float("reg_lambda", 1e-3, 10.0),
             params.Float("reg_alpha", 1e-3, 10.0),
-            params.Integer("max_depth", 2, 5),
-            params.Integer("n_estimators", 10, 300),
+            params.Integer("max_depth", 2, 4),
+            params.Integer("n_estimators", 10, 100),
             params.Categorical("lr", [1e-4, 1e-3, 1e-2]),
         ]
 
