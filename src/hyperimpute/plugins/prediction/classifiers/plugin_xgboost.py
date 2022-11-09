@@ -57,6 +57,7 @@ class XGBoostPlugin(base.ClassifierPlugin):
     """
 
     booster = ["gbtree", "gblinear", "dart"]
+    grow_policy = ["depthwise", "lossguide"]
 
     def __init__(
         self,
@@ -72,8 +73,10 @@ class XGBoostPlugin(base.ClassifierPlugin):
         min_child_weight: Optional[int] = None,
         max_bin: int = 256,
         booster: int = 0,
+        grow_policy: int = 0,
         nthread: int = max(1, int(multiprocessing.cpu_count() / 2)),
         random_state: int = 0,
+        eta: float = 0.3,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
@@ -95,8 +98,10 @@ class XGBoostPlugin(base.ClassifierPlugin):
             lr=lr,
             min_child_weight=min_child_weight,
             max_bin=max_bin,
+            eta=eta,
             verbosity=0,
             use_label_encoder=False,
+            grow_policy=XGBoostPlugin.grow_policy[grow_policy],
             # booster=XGBoostPlugin.booster[booster],
             random_state=random_state,
             nthread=nthread,
@@ -111,6 +116,7 @@ class XGBoostPlugin(base.ClassifierPlugin):
     @staticmethod
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
         return [
+            params.Float("eta", 1e-3, 0.5),
             params.Float("reg_lambda", 1e-3, 10.0),
             params.Float("reg_alpha", 1e-3, 10.0),
             params.Float("colsample_bytree", 0.1, 0.9),
@@ -122,7 +128,7 @@ class XGBoostPlugin(base.ClassifierPlugin):
             params.Integer("n_estimators", 10, 300),
             params.Integer("min_child_weight", 0, 300),
             params.Integer("max_bin", 256, 512),
-            params.Integer("booster", 0, len(XGBoostPlugin.booster) - 1),
+            params.Integer("grow_policy", 0, len(XGBoostPlugin.grow_policy) - 1),
         ]
 
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "XGBoostPlugin":

@@ -60,7 +60,6 @@ class LGBMRegressorPlugin(base.RegressionPlugin):
         subsample: float = 0.1,
         num_leaves: int = 31,
         min_child_samples: int = 1,
-        calibration: int = 0,
         model: Any = None,
         random_state: int = 0,
         **kwargs: Any
@@ -91,7 +90,7 @@ class LGBMRegressorPlugin(base.RegressionPlugin):
     @staticmethod
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
         return [
-            params.Float("n_estimators", 5, 100),
+            params.Integer("n_estimators", 5, 100),
             params.Float("reg_lambda", 1e-3, 1e3),
             params.Float("reg_alpha", 1e-3, 1e3),
             params.Float("colsample_bytree", 0.1, 1.0),
@@ -99,6 +98,7 @@ class LGBMRegressorPlugin(base.RegressionPlugin):
             params.Integer("num_leaves", 31, 256),
             params.Integer("min_child_samples", 1, 500),
             params.Categorical("learning_rate", [1e-4, 1e-3, 1e-2, 2e-4]),
+            params.Integer("max_depth", 1, 6),
         ]
 
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "LGBMRegressorPlugin":

@@ -99,6 +99,7 @@ class LightGBMPlugin(base.ClassifierPlugin):
             params.Integer("num_leaves", 31, 256),
             params.Integer("min_child_samples", 1, 500),
             params.Categorical("learning_rate", [1e-4, 1e-3, 1e-2, 2e-4]),
+            params.Integer("max_depth", 1, 6),
         ]
 
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "LightGBMPlugin":

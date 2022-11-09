@@ -45,7 +45,7 @@ class RandomForestRegressionPlugin(base.RegressionPlugin):
 
     def __init__(
         self,
-        n_estimators: int = 10,
+        n_estimators: int = 100,
         criterion: int = 0,
         max_features: int = 0,
         min_samples_split: int = 2,
@@ -89,6 +89,7 @@ class RandomForestRegressionPlugin(base.RegressionPlugin):
             params.Categorical("min_samples_split", [2, 5, 10]),
             params.Categorical("min_samples_leaf", [2, 5, 10]),
             params.Integer("max_depth", 1, 3),
+            params.Integer("n_estimators", 10, 300, 10),
         ]
 
     def _fit(
