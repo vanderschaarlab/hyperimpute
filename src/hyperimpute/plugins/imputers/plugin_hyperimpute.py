@@ -667,8 +667,8 @@ class IterativeErrorCorrection:
         for col in X.columns:
             avail_cnt = X[col].notna().sum()
             optimizer = self.optimizer
-            # if avail_cnt > self.optimize_thresh_upper:
-            #    optimizer = SimpleOptimizer
+            if avail_cnt > self.optimize_thresh_upper:
+                optimizer = SimpleOptimizer
 
             if self._is_categorical(X, col):
                 self.categorical_cols.append(col)
