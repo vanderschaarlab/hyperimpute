@@ -11,14 +11,14 @@ import hyperimpute.plugins.prediction.regression.base as base
 
 
 class KNeighborsRegressorPlugin(base.RegressionPlugin):
-    """Classification plugin based on the KNeighborsRegressor classifier.
+    """Regression plugin based on the KNeighborsRegressor.
 
     Example:
         >>> from hyperimpute.plugins.prediction import Predictions
-        >>> plugin = Predictions(category="classifiers").get("kneighbors")
+        >>> plugin = Predictions(category="regression").get("kneighbors")
         >>> from sklearn.datasets import load_iris
         >>> X, y = load_iris(return_X_y=True)
-        >>> plugin.fit_predict(X, y) # returns the probabilities for each class
+        >>> plugin.fit_predict(X, y)
     """
 
     weights = ["uniform", "distance"]
