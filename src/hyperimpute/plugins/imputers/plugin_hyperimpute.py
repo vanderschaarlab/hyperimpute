@@ -302,13 +302,13 @@ class BayesianOptimizer:
         self.patience = patience
         self.inner_patience = inner_patience
 
-        # for seed in self.seeds:
-        #    self.bo_studies[seed] = create_study(
-        #        study_name=f"{self.name}_imputer_evaluation_{seed}",
-        #        direction="maximize",
-        #        load_if_exists=False,
-        #        patience=self.patience,
-        #    )
+        for seed in self.seeds:
+            self.bo_studies[seed] = create_study(
+                study_name=f"{self.name}_imputer_evaluation_{seed}",
+                direction="maximize",
+                load_if_exists=False,
+                patience=self.patience,
+            )
 
         self.best_score = self.failure_score
         self.best_candidate = self.seeds[0]
@@ -335,7 +335,7 @@ class BayesianOptimizer:
                     score = out["clf"]["aucroc"][0]
                 break
             except BaseException as e:
-                print("failed to evaluate", e)
+                log.error(f"failed to evaluate {plugin.name()} error {e}")
                 score = self.failure_score
 
         return score
@@ -352,13 +352,7 @@ class BayesianOptimizer:
         plugin = Predictions(category=self.category).get_type(plugin_name)
 
         early_stopping_patience: int = 0
-        # study, pruner = self.bo_studies[plugin_name]
-        study, pruner = create_study(
-            study_name=f"{self.name}_imputer_evaluation_{plugin_name}",
-            direction="maximize",
-            load_if_exists=False,
-            patience=self.patience,
-        )
+        study, pruner = self.bo_studies[plugin_name]
 
         def evaluate_args(**kwargs: Any) -> float:
             return self.evaluate_plugin_args(plugin_name, kwargs, X, y)
