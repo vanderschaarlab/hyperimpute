@@ -22,7 +22,7 @@ def dataset() -> Tuple[pd.DataFrame, pd.Series]:
     return pd.DataFrame(X), pd.Series(y)
 
 
-@pytest.mark.parametrize("plugin", Predictions().list())
+@pytest.mark.parametrize("plugin", ["xgboost", "catboost"])
 def test_pickle(plugin: str) -> None:
     X, y = dataset()
 
