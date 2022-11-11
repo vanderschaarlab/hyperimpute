@@ -980,7 +980,7 @@ class HyperImputePlugin(base.ImputerPlugin):
         select_model_by_column: bool = True,
         select_model_by_iteration: bool = True,
         select_patience: int = 5,
-        select_lazy: bool = False,
+        select_lazy: bool = True,
         inner_loop_hook: Optional[Callable] = None,
     ) -> None:
         super().__init__(random_state=random_state)
