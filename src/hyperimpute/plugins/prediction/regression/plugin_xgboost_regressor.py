@@ -57,12 +57,25 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
         >>> plugin.fit_predict(X, y)
     """
 
+    grow_policy = ["depthwise", "lossguide"]
+
     def __init__(
         self,
+        reg_lambda: Optional[float] = None,
+        reg_alpha: Optional[float] = None,
+        colsample_bytree: Optional[float] = None,
+        colsample_bynode: Optional[float] = None,
+        colsample_bylevel: Optional[float] = None,
         n_estimators: int = 100,
-        max_depth: Optional[int] = 6,
+        max_depth: Optional[int] = 3,
         lr: Optional[float] = None,
         random_state: int = 0,
+        subsample: Optional[float] = None,
+        min_child_weight: Optional[int] = None,
+        max_bin: int = 256,
+        booster: int = 0,
+        grow_policy: int = 0,
+        eta: float = 0.3,
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
@@ -82,6 +95,16 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
             random_state=random_state,
             n_estimators=n_estimators,
             max_depth=max_depth,
+            reg_lambda=reg_lambda,
+            reg_alpha=reg_alpha,
+            colsample_bytree=colsample_bytree,
+            colsample_bynode=colsample_bynode,
+            colsample_bylevel=colsample_bylevel,
+            subsample=subsample,
+            min_child_weight=min_child_weight,
+            max_bin=max_bin,
+            eta=eta,
+            grow_policy=XGBoostRegressorPlugin.grow_policy[grow_policy],
             nthread=max(1, int(multiprocessing.cpu_count() / 2)),
             lr=lr,
             **gpu_args,
@@ -95,8 +118,21 @@ class XGBoostRegressorPlugin(base.RegressionPlugin):
     @staticmethod
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
         return [
-            params.Integer("max_depth", 2, 9),
+            params.Float("eta", 1e-3, 0.5),
+            params.Float("reg_lambda", 1e-3, 10.0),
+            params.Float("reg_alpha", 1e-3, 10.0),
             params.Categorical("lr", [1e-4, 1e-3, 1e-2]),
+            params.Float("colsample_bytree", 0.1, 0.9),
+            params.Float("colsample_bynode", 0.1, 0.9),
+            params.Float("colsample_bylevel", 0.1, 0.9),
+            params.Float("subsample", 0.1, 0.9),
+            params.Integer("max_depth", 2, 5),
+            params.Integer("n_estimators", 10, 300),
+            params.Integer("min_child_weight", 0, 300),
+            params.Integer("max_bin", 256, 512),
+            params.Integer(
+                "grow_policy", 0, len(XGBoostRegressorPlugin.grow_policy) - 1
+            ),
         ]
 
     def _fit(

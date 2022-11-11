@@ -1,22 +1,21 @@
 # stdlib
+import sys
 from typing import Any
 
 # third party
-import numpy as np
 import optuna
 import pytest
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_diabetes
 
 # hyperimpute absolute
 from hyperimpute.plugins.prediction import PredictionPlugin, Predictions
-from hyperimpute.plugins.prediction.classifiers.plugin_random_forest import plugin
+from hyperimpute.plugins.prediction.regression.plugin_lgbm_regressor import plugin
 from hyperimpute.utils.serialization import load_model, save_model
-from hyperimpute.utils.tester import evaluate_estimator
+from hyperimpute.utils.tester import evaluate_regression
 
 
 def from_api() -> PredictionPlugin:
-    return Predictions().get("random_forest")
+    return Predictions(category="regression").get("lgbm_regressor")
 
 
 def from_module() -> PredictionPlugin:
@@ -29,48 +28,50 @@ def from_pickle() -> PredictionPlugin:
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_random_forest_plugin_sanity(test_plugin: PredictionPlugin) -> None:
+def test_lgbm_regressor_plugin_sanity(test_plugin: PredictionPlugin) -> None:
     assert test_plugin is not None
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_random_forest_plugin_name(test_plugin: PredictionPlugin) -> None:
-    assert test_plugin.name() == "random_forest"
+def test_lgbm_regressor_plugin_name(test_plugin: PredictionPlugin) -> None:
+    assert test_plugin.name() == "lgbm_regressor"
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_random_forest_plugin_type(test_plugin: PredictionPlugin) -> None:
+def test_lgbm_regressor_plugin_type(test_plugin: PredictionPlugin) -> None:
     assert test_plugin.type() == "prediction"
-    assert test_plugin.subtype() == "classifier"
+    assert test_plugin.subtype() == "regression"
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_random_forest_plugin_hyperparams(test_plugin: PredictionPlugin) -> None:
-    assert len(test_plugin.hyperparameter_space()) == 7
+def test_lgbm_regressor_plugin_hyperparams(test_plugin: PredictionPlugin) -> None:
+    assert len(test_plugin.hyperparameter_space()) == 9
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_random_forest_plugin_fit_predict(test_plugin: PredictionPlugin) -> None:
-    X, y = load_iris(return_X_y=True, as_frame=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+@pytest.mark.skipif(sys.platform == "darwin", reason="LGBM crash on OSX")
+def test_lgbm_regressor_plugin_fit_predict(test_plugin: PredictionPlugin) -> None:
+    X, y = load_diabetes(return_X_y=True)
 
-    y_pred = test_plugin.fit(X_train, y_train).predict(X_test)
+    score = evaluate_regression(test_plugin, X, y)
 
-    assert np.abs(np.subtract(y_pred.values, y_test.values)).mean() < 1
+    assert score["clf"]["rmse"][0] < 5000
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="LGBM crash on OSX")
 def test_param_search() -> None:
     if len(plugin.hyperparameter_space()) == 0:
         return
 
-    X, y = load_iris(return_X_y=True, as_frame=True)
+    X, y = load_diabetes(return_X_y=True)
 
     def evaluate_args(**kwargs: Any) -> float:
-        kwargs["n_estimators"] = 20
-        model = plugin(**kwargs)
-        metrics = evaluate_estimator(model, X, y)
+        kwargs["n_estimators"] = 10
 
-        return metrics["clf"]["aucroc"][0]
+        model = plugin(**kwargs)
+        metrics = evaluate_regression(model, X, y)
+
+        return metrics["clf"]["rmse"][0]
 
     def objective(trial: optuna.Trial) -> float:
         args = plugin.sample_hyperparameters(trial)

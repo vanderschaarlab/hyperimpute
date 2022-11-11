@@ -1,4 +1,5 @@
 # stdlib
+import sys
 from typing import Any
 
 # third party
@@ -10,13 +11,13 @@ from sklearn.model_selection import train_test_split
 
 # hyperimpute absolute
 from hyperimpute.plugins.prediction import PredictionPlugin, Predictions
-from hyperimpute.plugins.prediction.classifiers.plugin_catboost import plugin
+from hyperimpute.plugins.prediction.classifiers.plugin_lgbm import plugin
 from hyperimpute.utils.serialization import load_model, save_model
 from hyperimpute.utils.tester import evaluate_estimator
 
 
 def from_api() -> PredictionPlugin:
-    return Predictions().get("catboost", iterations=100)
+    return Predictions().get("lgbm", iterations=100)
 
 
 def from_module() -> PredictionPlugin:
@@ -29,28 +30,29 @@ def from_pickle() -> PredictionPlugin:
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_sanity(test_plugin: PredictionPlugin) -> None:
+def test_lgbm_plugin_sanity(test_plugin: PredictionPlugin) -> None:
     assert test_plugin is not None
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_name(test_plugin: PredictionPlugin) -> None:
-    assert test_plugin.name() == "catboost"
+def test_lgbm_plugin_name(test_plugin: PredictionPlugin) -> None:
+    assert test_plugin.name() == "lgbm"
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_type(test_plugin: PredictionPlugin) -> None:
+def test_lgbm_plugin_type(test_plugin: PredictionPlugin) -> None:
     assert test_plugin.type() == "prediction"
     assert test_plugin.subtype() == "classifier"
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_hyperparams(test_plugin: PredictionPlugin) -> None:
-    assert len(test_plugin.hyperparameter_space()) == 7
+def test_lgbm_plugin_hyperparams(test_plugin: PredictionPlugin) -> None:
+    assert len(test_plugin.hyperparameter_space()) == 9
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_fit_predict(test_plugin: PredictionPlugin) -> None:
+@pytest.mark.skipif(sys.platform == "darwin", reason="LGBM crash on OSX")
+def test_lgbm_plugin_fit_predict(test_plugin: PredictionPlugin) -> None:
     X, y = load_iris(return_X_y=True, as_frame=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
@@ -60,7 +62,8 @@ def test_catboost_plugin_fit_predict(test_plugin: PredictionPlugin) -> None:
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_score(test_plugin: PredictionPlugin) -> None:
+@pytest.mark.skipif(sys.platform == "darwin", reason="LGBM crash on OSX")
+def test_lgbm_plugin_score(test_plugin: PredictionPlugin) -> None:
     X, y = load_iris(return_X_y=True, as_frame=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
@@ -69,6 +72,7 @@ def test_catboost_plugin_score(test_plugin: PredictionPlugin) -> None:
     assert test_plugin.score(X_test, y_test) > 0.5
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="LGBM crash on OSX")
 def test_param_search() -> None:
     if len(plugin.hyperparameter_space()) == 0:
         return

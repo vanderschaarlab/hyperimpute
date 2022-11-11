@@ -10,17 +10,17 @@ from sklearn.model_selection import train_test_split
 
 # hyperimpute absolute
 from hyperimpute.plugins.prediction import PredictionPlugin, Predictions
-from hyperimpute.plugins.prediction.classifiers.plugin_catboost import plugin
+from hyperimpute.plugins.prediction.classifiers.plugin_svc import plugin
 from hyperimpute.utils.serialization import load_model, save_model
 from hyperimpute.utils.tester import evaluate_estimator
 
 
 def from_api() -> PredictionPlugin:
-    return Predictions().get("catboost", iterations=100)
+    return Predictions().get("svc")
 
 
 def from_module() -> PredictionPlugin:
-    return plugin(iterations=100)
+    return plugin()
 
 
 def from_pickle() -> PredictionPlugin:
@@ -29,44 +29,34 @@ def from_pickle() -> PredictionPlugin:
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_sanity(test_plugin: PredictionPlugin) -> None:
+def test_svc_plugin_sanity(test_plugin: PredictionPlugin) -> None:
     assert test_plugin is not None
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_name(test_plugin: PredictionPlugin) -> None:
-    assert test_plugin.name() == "catboost"
+def test_svc_plugin_name(test_plugin: PredictionPlugin) -> None:
+    assert test_plugin.name() == "svc"
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_type(test_plugin: PredictionPlugin) -> None:
+def test_svc_plugin_type(test_plugin: PredictionPlugin) -> None:
     assert test_plugin.type() == "prediction"
     assert test_plugin.subtype() == "classifier"
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_hyperparams(test_plugin: PredictionPlugin) -> None:
-    assert len(test_plugin.hyperparameter_space()) == 7
+def test_svc_plugin_hyperparams(test_plugin: PredictionPlugin) -> None:
+    assert len(test_plugin.hyperparameter_space()) == 3
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_fit_predict(test_plugin: PredictionPlugin) -> None:
+def test_svc_plugin_fit_predict(test_plugin: PredictionPlugin) -> None:
     X, y = load_iris(return_X_y=True, as_frame=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
     y_pred = test_plugin.fit(X_train, y_train).predict(X_test)
 
-    assert np.abs((y_pred.values - y_test.values).mean()) < 1
-
-
-@pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
-def test_catboost_plugin_score(test_plugin: PredictionPlugin) -> None:
-    X, y = load_iris(return_X_y=True, as_frame=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-
-    test_plugin.fit(X_train, y_train)
-
-    assert test_plugin.score(X_test, y_test) > 0.5
+    assert np.abs(np.subtract(y_pred.values, y_test.values)).mean() < 1
 
 
 def test_param_search() -> None:
@@ -76,7 +66,6 @@ def test_param_search() -> None:
     X, y = load_iris(return_X_y=True, as_frame=True)
 
     def evaluate_args(**kwargs: Any) -> float:
-        kwargs["iterations"] = 100
         model = plugin(**kwargs)
         metrics = evaluate_estimator(model, X, y)
 
