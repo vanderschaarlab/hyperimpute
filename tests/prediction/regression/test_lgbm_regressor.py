@@ -1,4 +1,5 @@
 # stdlib
+import sys
 from typing import Any
 
 # third party
@@ -48,6 +49,7 @@ def test_lgbm_regressor_plugin_hyperparams(test_plugin: PredictionPlugin) -> Non
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])
+@pytest.mark.skipif(sys.platform == "darwin", reason="LGBM crash on OSX")
 def test_lgbm_regressor_plugin_fit_predict(test_plugin: PredictionPlugin) -> None:
     X, y = load_diabetes(return_X_y=True)
 
@@ -56,6 +58,7 @@ def test_lgbm_regressor_plugin_fit_predict(test_plugin: PredictionPlugin) -> Non
     assert score["clf"]["rmse"][0] < 5000
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="LGBM crash on OSX")
 def test_param_search() -> None:
     if len(plugin.hyperparameter_space()) == 0:
         return
