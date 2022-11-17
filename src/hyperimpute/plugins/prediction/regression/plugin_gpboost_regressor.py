@@ -3,17 +3,15 @@ import multiprocessing
 from typing import Any, List, Optional
 
 # third party
-from gpboost import GPBoostClassifier
-import numpy as np
+from gpboost import GPBoostRegressor
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
-import hyperimpute.plugins.prediction.classifiers.base as base
+import hyperimpute.plugins.prediction.regression.base as base
 
 
-class GPBoostPlugin(base.ClassifierPlugin):
+class GPBoostRegressorPlugin(base.RegressionPlugin):
     """Classification plugin based on the GPBoost classifier.
 
     Args:
@@ -41,7 +39,7 @@ class GPBoostPlugin(base.ClassifierPlugin):
 
     Example:
         >>> from hyperimpute.plugins.prediction import Predictions
-        >>> plugin = Predictions(category="classifiers").get("gpboost")
+        >>> plugin = Predictions(category="regression").get("gpboost_regressor")
         >>> from sklearn.datasets import load_iris
         >>> X, y = load_iris(return_X_y=True)
         >>> plugin.fit_predict(X, y)
@@ -52,7 +50,7 @@ class GPBoostPlugin(base.ClassifierPlugin):
     def __init__(
         self,
         boosting_type: int = 0,
-        max_depth: Optional[int] = 3,
+        max_depth: Optional[int] = -1,
         n_estimators: int = 100,
         reg_lambda: float = 0,
         reg_alpha: float = 0,
@@ -69,8 +67,8 @@ class GPBoostPlugin(base.ClassifierPlugin):
         if hyperparam_search_iterations:
             n_estimators = int(hyperparam_search_iterations)
 
-        self.model = GPBoostClassifier(
-            boosting_type=GPBoostPlugin.boosting_type[boosting_type],
+        self.model = GPBoostRegressor(
+            boosting_type=GPBoostRegressorPlugin.boosting_type[boosting_type],
             n_estimators=n_estimators,
             max_depth=max_depth,
             reg_lambda=reg_lambda,
@@ -86,7 +84,7 @@ class GPBoostPlugin(base.ClassifierPlugin):
 
     @staticmethod
     def name() -> str:
-        return "gpboost"
+        return "gpboost_regressor"
 
     @staticmethod
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[params.Params]:
@@ -99,23 +97,19 @@ class GPBoostPlugin(base.ClassifierPlugin):
             params.Integer("max_depth", 2, 5),
             params.Integer("n_estimators", 10, 300),
             params.Integer("min_child_weight", 0, 300),
-            params.Integer("boosting_type", 0, len(GPBoostPlugin.boosting_type) - 1),
+            params.Integer(
+                "boosting_type", 0, len(GPBoostRegressorPlugin.boosting_type) - 1
+            ),
         ]
 
-    def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "GPBoostPlugin":
-        y = np.asarray(args[0])
-        self.encoder = LabelEncoder()
-        y = self.encoder.fit_transform(y)
-        self.model.fit(X, y, **kwargs)
+    def _fit(
+        self, X: pd.DataFrame, *args: Any, **kwargs: Any
+    ) -> "GPBoostRegressorPlugin":
+        self.model.fit(X, *args, **kwargs)
         return self
 
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
-        return self.encoder.inverse_transform(self.model.predict(X, *args, **kwargs))
-
-    def _predict_proba(
-        self, X: pd.DataFrame, *args: Any, **kwargs: Any
-    ) -> pd.DataFrame:
-        return self.model.predict_proba(X, *args, **kwargs)
+        return self.model.predict(X, *args, **kwargs)
 
 
-plugin = GPBoostPlugin
+plugin = GPBoostRegressorPlugin
