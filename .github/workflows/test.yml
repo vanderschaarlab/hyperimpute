@@ -5,6 +5,8 @@ on:
     branches: [main, release]
   pull_request:
     types: [opened, synchronize, reopened]
+  schedule:
+    - cron:  '4 5 * * 2'
 
 jobs:
   Linter:
@@ -56,4 +58,4 @@ jobs:
             pip install .
             pip install .[testing]
       - name: Test with pytest
-        run: pytest -vvvsx -m "not slow"
+        run: pytest -vvvsx
