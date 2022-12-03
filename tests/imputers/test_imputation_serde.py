@@ -3,6 +3,7 @@ from typing import Tuple
 
 # third party
 import numpy as np
+import pandas as pd
 import pytest
 
 # hyperimpute absolute
@@ -23,16 +24,15 @@ def dataset(mechanism: str, p_miss: float) -> Tuple[np.ndarray, np.ndarray, np.n
     x = np.random.multivariate_normal(mean, cov, size=n)
     x_simulated = simulate_nan(x, p_miss, mechanism)
 
-    mask = x_simulated["mask"]
     x_miss = x_simulated["X_incomp"]
 
-    return x, x_miss, mask
+    return pd.DataFrame(x), pd.DataFrame(x_miss)
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("plugin", Imputers().list())
 def test_pickle(plugin: str) -> None:
-    x, x_miss, mask = dataset("MAR", 0.3)
+    x, x_miss = dataset("MAR", 0.3)
 
     estimator = Imputers().get(plugin)
 

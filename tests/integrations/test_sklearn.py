@@ -1,7 +1,8 @@
 # third party
 import numpy as np
+import pandas as pd
 import pytest
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
@@ -18,9 +19,7 @@ def _eval_imputer_pipeline(test_imputer: str) -> None:
 
     rng = np.random.RandomState(0)
 
-    dataset = load_boston()
-
-    X_full, y_full = dataset.data, dataset.target
+    X_full, y_full = load_iris(as_frame=True, return_X_y=True)
 
     n_samples = int(X_full.shape[0])
     n_features = int(X_full.shape[1])
@@ -38,15 +37,17 @@ def _eval_imputer_pipeline(test_imputer: str) -> None:
     missing_features = rng.randint(0, n_features, n_missing_samples)
 
     # Estimate the score without the lines containing missing values
-    X_filtered = X_full[~missing_samples, :]
-    y_filtered = y_full[~missing_samples]
+    X_filtered = X_full.values[~missing_samples, :]
+    y_filtered = y_full.values[~missing_samples]
     estimator = RandomForestRegressor(random_state=0, n_estimators=100)
     score_with_miss = cross_val_score(estimator, X_filtered, y_filtered, cv=2).mean()
     print(f"Score without the samples containing missing values = {score_with_miss}")
 
     # Estimate the score after imputation of the missing values
-    X_missing = X_full.copy()
+    X_missing = X_full.copy().values
     X_missing[np.where(missing_samples)[0], missing_features] = np.nan
+    X_missing = pd.DataFrame(X_missing, index=X_full.index)
+
     y_missing = y_full.copy()
     estimator = Pipeline(
         [
@@ -54,7 +55,9 @@ def _eval_imputer_pipeline(test_imputer: str) -> None:
             ("forest", RandomForestRegressor(random_state=0, n_estimators=100)),
         ]
     )
-    score_with_impute = cross_val_score(estimator, X_missing, y_missing, cv=2).mean()
+    score_with_impute = cross_val_score(
+        estimator, X_missing, y_missing, cv=2, error_score="raise"
+    ).mean()
     print(
         f"Score after imputation of the missing values using {imputer.name()} = {score_with_impute}"
     )
