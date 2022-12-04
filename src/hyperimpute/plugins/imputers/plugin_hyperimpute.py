@@ -3,7 +3,6 @@ from typing import Any, Callable, List, Optional
 
 # third party
 import pandas as pd
-from pydantic import validate_arguments
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.params as params
@@ -57,7 +56,6 @@ class HyperImputePlugin(base.ImputerPlugin):
     initial_strategy_vals = ["mean", "median", "most_frequent"]
     imputation_order_vals = ["ascending", "descending", "random"]
 
-    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
         classifier_seed: list = internals.LARGE_DATA_CLF_SEEDS,
