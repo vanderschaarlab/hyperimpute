@@ -23,6 +23,7 @@ import hyperimpute.plugins.imputers.base as base
 from hyperimpute.plugins.prediction import PredictionPlugin, Predictions
 from hyperimpute.utils.distributions import enable_reproducible_results
 from hyperimpute.utils.optimizer import EarlyStoppingExceeded, create_study
+from hyperimpute.utils.serializable import Serializable
 from hyperimpute.utils.tester import evaluate_estimator, evaluate_regression
 
 INNER_TOL = 1e-8
@@ -61,7 +62,7 @@ class NpEncoder(json.JSONEncoder):
         return super(NpEncoder, self).default(obj)
 
 
-class HyperbandOptimizer:
+class HyperbandOptimizer(Serializable):
     """Optimization helper based on HyperBand.
 
     Args:
@@ -92,6 +93,8 @@ class HyperbandOptimizer:
         eta: int = 3,  # defines configuration downsampling rate (default = 3)
         random_state: int = 0,
     ) -> None:
+        super().__init__()
+
         self.name = name
         self.category = category
         self.failure_score = -9999999
@@ -259,7 +262,7 @@ class HyperbandOptimizer:
         )
 
 
-class BayesianOptimizer:
+class BayesianOptimizer(Serializable):
     """Optimization helper based on Bayesian Optimization.
 
     Args:
@@ -288,6 +291,8 @@ class BayesianOptimizer:
         inner_patience: int = 5,
         random_state: int = 0,
     ):
+        super().__init__()
+
         self.name = name
         self.category = category
         self.random_state = random_state
@@ -430,7 +435,7 @@ class BayesianOptimizer:
         )
 
 
-class SimpleOptimizer:
+class SimpleOptimizer(Serializable):
     """Optimization helper based on default args evaluation.
 
     Args:
@@ -455,6 +460,8 @@ class SimpleOptimizer:
         regression_seed: list,
         random_state: int = 0,
     ) -> None:
+        super().__init__()
+
         self.name = name
         self.category = category
         self.random_state = random_state
@@ -525,7 +532,7 @@ class SimpleOptimizer:
         )
 
 
-class IterativeErrorCorrection:
+class IterativeErrorCorrection(Serializable):
     """HyperImpute core runner.
 
     Args:
@@ -580,6 +587,8 @@ class IterativeErrorCorrection:
         inner_loop_hook: Optional[Callable] = None,
         random_state: int = 0,
     ):
+        super().__init__()
+
         if optimizer not in [
             "hyperband",
             "bayesian",

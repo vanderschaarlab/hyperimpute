@@ -14,12 +14,13 @@ from pydantic import validate_arguments
 # hyperimpute absolute
 import hyperimpute.logger as log
 import hyperimpute.plugins.utils.cast as cast
+from hyperimpute.utils.serializable import Serializable
 
 # hyperimpute relative
 from .params import Params
 
 
-class Plugin(metaclass=ABCMeta):
+class Plugin(Serializable, metaclass=ABCMeta):
     """Base class for all plugins.
     Each derived class must implement the following methods:
         type() - a static method that returns the type of the plugin. e.g., imputation, preprocessing, prediction, etc.
@@ -36,7 +37,7 @@ class Plugin(metaclass=ABCMeta):
     """
 
     def __init__(self) -> None:
-        pass
+        super().__init__()
 
     @staticmethod
     @abstractmethod

@@ -9,7 +9,7 @@ import pytest
 # hyperimpute absolute
 from hyperimpute.plugins import Imputers
 from hyperimpute.plugins.utils.simulate import simulate_nan
-from hyperimpute.utils.serialization import load_model, save_model
+from hyperimpute.utils.serialization import load, save
 
 
 def dataset(mechanism: str, p_miss: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -38,7 +38,7 @@ def test_pickle(plugin: str) -> None:
 
     estimator.fit_transform(x_miss)
 
-    buff = save_model(estimator)
-    estimator_new = load_model(buff)
+    buff = save(estimator)
+    estimator_new = load(buff)
 
     estimator_new.transform(x_miss)

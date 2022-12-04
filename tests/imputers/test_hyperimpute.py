@@ -11,18 +11,18 @@ from hyperimpute.plugins.imputers import ImputerPlugin, Imputers
 from hyperimpute.plugins.imputers.plugin_hyperimpute import plugin
 from hyperimpute.plugins.utils.metrics import RMSE
 from hyperimpute.plugins.utils.simulate import simulate_nan
-from hyperimpute.utils.serialization import load_model, save_model
+from hyperimpute.utils.serialization import load, save
 
 
 def from_serde(optimizer: str = "simple") -> ImputerPlugin:
-    buff = save_model(
+    buff = save(
         plugin(
             classifier_seed=["logistic_regression", "random_forests"],
             regression_seed=["linear_regression", "random_forests_regressor"],
             optimizer=optimizer,
         )
     )
-    return load_model(buff)
+    return load(buff)
 
 
 def from_api(

@@ -9,7 +9,7 @@ from sklearn.datasets import load_diabetes
 # hyperimpute absolute
 from hyperimpute.plugins.prediction import PredictionPlugin, Predictions
 from hyperimpute.plugins.prediction.regression.plugin_svm import plugin
-from hyperimpute.utils.serialization import load_model, save_model
+from hyperimpute.utils.serialization import load, save
 from hyperimpute.utils.tester import evaluate_regression
 
 
@@ -22,8 +22,8 @@ def from_module() -> PredictionPlugin:
 
 
 def from_pickle() -> PredictionPlugin:
-    buff = save_model(plugin())
-    return load_model(buff)
+    buff = save(plugin())
+    return load(buff)
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_pickle()])

@@ -115,11 +115,11 @@ class LightGBMPlugin(base.ClassifierPlugin):
         return self.model.predict_proba(X, *args, **kwargs)
 
     def save(self) -> bytes:
-        return serialization.save_model(self.model)
+        return serialization.save(self.model)
 
     @classmethod
     def load(cls, buff: bytes) -> "LightGBMPlugin":
-        model = serialization.load_model(buff)
+        model = serialization.load(buff)
 
         return cls(model=model)
 
