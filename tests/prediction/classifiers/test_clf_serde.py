@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 
 # hyperimpute absolute
 from hyperimpute.plugins import Predictions
-from hyperimpute.utils.serialization import load_model, save_model
+from hyperimpute.utils.serialization import load, save
 
 
 def dataset() -> Tuple[pd.DataFrame, pd.Series]:
@@ -35,7 +35,7 @@ def test_pickle(plugin: str) -> None:
     estimator.fit(X_train, y_train)
     estimator.predict(X_test)
 
-    buff = save_model(estimator)
-    estimator_new = load_model(buff)
+    buff = save(estimator)
+    estimator_new = load(buff)
 
     estimator_new.predict(X_test)

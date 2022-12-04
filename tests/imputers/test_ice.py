@@ -11,12 +11,12 @@ from hyperimpute.plugins.imputers import ImputerPlugin, Imputers
 from hyperimpute.plugins.imputers.plugin_ice import plugin
 from hyperimpute.plugins.utils.metrics import RMSE
 from hyperimpute.plugins.utils.simulate import simulate_nan
-from hyperimpute.utils.serialization import load_model, save_model
+from hyperimpute.utils.serialization import load, save
 
 
 def from_serde() -> ImputerPlugin:
-    buff = save_model(plugin())
-    return load_model(buff)
+    buff = save(plugin())
+    return load(buff)
 
 
 def from_api() -> ImputerPlugin:

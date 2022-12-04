@@ -6,7 +6,6 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   schedule:
-    # * is a special character in YAML so you have to quote this string
     - cron:  '4 5 * * 2'
 
 jobs:
@@ -59,4 +58,4 @@ jobs:
             pip install .
             pip install .[testing]
       - name: Test with pytest
-        run: pytest -vvvsx -m "not slow"
+        run: pytest -vvvsx

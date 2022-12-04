@@ -11,12 +11,12 @@ from hyperimpute.plugins.imputers import ImputerPlugin, Imputers
 from hyperimpute.plugins.imputers.plugin_gain import plugin
 from hyperimpute.plugins.utils.metrics import RMSE
 from hyperimpute.plugins.utils.simulate import simulate_nan
-from hyperimpute.utils.serialization import load_model, save_model
+from hyperimpute.utils.serialization import load, save
 
 
 def from_serde() -> ImputerPlugin:
-    buff = save_model(plugin(n_epochs=100))
-    return load_model(buff)
+    buff = save(plugin(n_epochs=100))
+    return load(buff)
 
 
 def from_api() -> ImputerPlugin:
@@ -64,7 +64,7 @@ def test_gain_plugin_fit_transform(test_plugin: ImputerPlugin) -> None:
 @pytest.mark.parametrize("p_miss", [0.5])
 @pytest.mark.parametrize(
     "other_plugin",
-    [Imputers().get("mean"), Imputers().get("median"), Imputers().get("most_frequent")],
+    [Imputers().get("most_frequent")],
 )
 def test_compare_methods_perf(
     test_plugin: ImputerPlugin, mechanism: str, p_miss: float, other_plugin: Any

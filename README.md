@@ -3,6 +3,7 @@
 <div align="center">
 
 [![Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
+[![Tutorials](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test_tutorials.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test_tutorials.yml)
 [![Package Release](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/release.yml)
 [![Documentation Status](https://readthedocs.org/projects/hyperimpute/badge/?version=latest)](https://hyperimpute.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://img.shields.io/pypi/dd/hyperimpute)](https://pypi.org/project/hyperimpute/)
