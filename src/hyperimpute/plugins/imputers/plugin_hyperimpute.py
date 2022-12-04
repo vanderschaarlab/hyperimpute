@@ -647,7 +647,7 @@ class IterativeErrorCorrection:
     def _setup(self, X: pd.DataFrame) -> pd.DataFrame:
         # Encode the categorical columns
         # Reset internal caches
-        X = pd.DataFrame(X).copy()
+        X = pd.DataFrame(X).copy().reset_index(drop=True)
         X.columns = X.columns.map(str)
 
         self.mask = self._missing_indicator(X)
