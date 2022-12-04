@@ -14,7 +14,7 @@ from pydantic import validate_arguments
 # hyperimpute absolute
 import hyperimpute.logger as log
 import hyperimpute.plugins.utils.cast as cast
-from hyperimpute.utils.serializable import Serializable
+from hyperimpute.utils.serialization import Serializable
 
 # hyperimpute relative
 from .params import Params
