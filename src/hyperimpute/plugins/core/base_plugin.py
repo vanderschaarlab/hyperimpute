@@ -9,7 +9,6 @@ from typing import Any, Dict, Generator, List, Type
 # third party
 from optuna.trial import Trial
 import pandas as pd
-from pydantic import validate_arguments
 
 # hyperimpute absolute
 import hyperimpute.logger as log
@@ -112,15 +111,12 @@ class Plugin(Serializable, metaclass=ABCMeta):
     def fqdn(cls) -> str:
         return cls.type() + "." + cls.subtype() + "." + cls.name()
 
-    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def fit_transform(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         return pd.DataFrame(self.fit(X, *args, *kwargs).transform(X))
 
-    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def fit_predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         return pd.DataFrame(self.fit(X, *args, *kwargs).predict(X))
 
-    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> Any:
         X = cast.to_dataframe(X)
         return self._fit(X, *args, **kwargs)
@@ -129,7 +125,6 @@ class Plugin(Serializable, metaclass=ABCMeta):
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "Plugin":
         ...
 
-    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = cast.to_dataframe(X)
         return pd.DataFrame(self._transform(X))
@@ -138,7 +133,6 @@ class Plugin(Serializable, metaclass=ABCMeta):
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
         ...
 
-    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         X = cast.to_dataframe(X)
         return pd.DataFrame(self._predict(X, *args, *kwargs))
