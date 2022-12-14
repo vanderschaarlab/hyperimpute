@@ -7,6 +7,7 @@ from sklearn.impute._base import _BaseImputer
 
 # hyperimpute absolute
 import hyperimpute.plugins.core.base_plugin as plugin
+from hyperimpute.utils.distributions import enable_reproducible_results
 
 
 class ImputerPlugin(_BaseImputer, plugin.Plugin):
@@ -24,8 +25,10 @@ class ImputerPlugin(_BaseImputer, plugin.Plugin):
     """
 
     def __init__(self, random_state: int = 0) -> None:
-        super().__init__()
+        _BaseImputer.__init__(self)
+        plugin.Plugin.__init__(self)
 
+        enable_reproducible_results(random_state)
         self.random_state = random_state
 
     @staticmethod

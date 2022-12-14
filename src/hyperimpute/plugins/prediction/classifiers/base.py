@@ -29,7 +29,9 @@ class ClassifierPlugin(
     def __init__(self, **kwargs: Any) -> None:
         self.args = kwargs
 
-        super().__init__()
+        ClassifierMixin.__init__(self)
+        BaseEstimator.__init__(self)
+        prediction_base.PredictionPlugin.__init__(self)
 
     @staticmethod
     def subtype() -> str:
