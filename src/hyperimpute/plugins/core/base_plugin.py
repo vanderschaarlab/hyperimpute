@@ -121,7 +121,6 @@ class Plugin(Serializable, metaclass=ABCMeta):
 
     def fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> Any:
         X = cast.to_dataframe(X)
-        print(self.drop_consts)
 
         for col in X.columns:
             if len(X.loc[X[col].notna(), col].unique()) <= 1:
