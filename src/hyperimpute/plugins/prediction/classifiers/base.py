@@ -9,6 +9,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 import hyperimpute.plugins.core.base_plugin as plugin
 import hyperimpute.plugins.prediction.base as prediction_base
 import hyperimpute.plugins.utils.cast as cast
+from hyperimpute.utils.distributions import enable_reproducible_results
 from hyperimpute.utils.tester import Eval
 
 
@@ -26,8 +27,11 @@ class ClassifierPlugin(
     If any method implementation is missing, the class constructor will fail.
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, random_state: int = 0, **kwargs: Any) -> None:
         self.args = kwargs
+        self.random_state = random_state
+
+        enable_reproducible_results(self.random_state)
 
         ClassifierMixin.__init__(self)
         BaseEstimator.__init__(self)
@@ -39,6 +43,7 @@ class ClassifierPlugin(
 
     def fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> plugin.Plugin:
         X = cast.to_dataframe(X)
+        enable_reproducible_results(self.random_state)
 
         if len(args) == 0:
             raise RuntimeError("Please provide the training labels as well")

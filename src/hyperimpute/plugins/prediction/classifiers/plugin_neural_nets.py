@@ -251,7 +251,7 @@ class NeuralNetsPlugin(base.ClassifierPlugin):
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any,
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(random_state=random_state, **kwargs)
 
         enable_reproducible_results(random_state)
 

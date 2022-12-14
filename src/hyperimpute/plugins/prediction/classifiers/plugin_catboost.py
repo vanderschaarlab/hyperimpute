@@ -54,7 +54,7 @@ class CatBoostPlugin(base.ClassifierPlugin):
         random_strength: float = 1,
         **kwargs: Any
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(random_state=random_state, **kwargs)
         if model is not None:
             self.model = model
             return

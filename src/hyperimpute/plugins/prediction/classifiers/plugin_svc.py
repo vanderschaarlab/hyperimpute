@@ -33,7 +33,7 @@ class SVCPlugin(base.ClassifierPlugin):
         random_state: int = 0,
         **kwargs: Any
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(random_state=random_state, **kwargs)
 
         if hyperparam_search_iterations:
             max_iter = int(hyperparam_search_iterations) * 100

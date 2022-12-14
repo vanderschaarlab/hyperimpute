@@ -65,7 +65,7 @@ class LightGBMPlugin(base.ClassifierPlugin):
         random_state: int = 0,
         **kwargs: Any
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(random_state=random_state, **kwargs)
         if model is not None:
             self.model = model
             return
