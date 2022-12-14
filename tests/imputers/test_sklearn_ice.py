@@ -74,7 +74,7 @@ def test_compare_methods_perf(
 ) -> None:
     np.random.seed(0)
 
-    n = 10
+    n = 50
     p = 4
 
     mean = np.repeat(0, p)
