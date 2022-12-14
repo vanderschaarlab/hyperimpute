@@ -137,7 +137,7 @@ class Plugin(Serializable, metaclass=ABCMeta):
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = cast.to_dataframe(X)
         X = X.drop(columns=self.drop_consts)
-        return pd.DataFrame(self._transform(X), columns=X.columns, index=X.index)
+        return pd.DataFrame(self._transform(X))
 
     @abstractmethod
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
