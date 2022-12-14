@@ -119,6 +119,13 @@ class Plugin(Serializable, metaclass=ABCMeta):
 
     def fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> Any:
         X = cast.to_dataframe(X)
+        self.drop_consts = []
+
+        for col in X.columns:
+            if len(X.loc[X[col].notna(), col].unique()) <= 1:
+                self.drop_consts.append(col)
+
+        X = X.drop(columns=self.drop_consts)
         return self._fit(X, *args, **kwargs)
 
     @abstractmethod
@@ -127,6 +134,7 @@ class Plugin(Serializable, metaclass=ABCMeta):
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = cast.to_dataframe(X)
+        X = X.drop(columns=self.drop_consts)
         return pd.DataFrame(self._transform(X))
 
     @abstractmethod
@@ -135,6 +143,7 @@ class Plugin(Serializable, metaclass=ABCMeta):
 
     def predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         X = cast.to_dataframe(X)
+        X = X.drop(columns=self.drop_consts)
         return pd.DataFrame(self._predict(X, *args, *kwargs))
 
     @abstractmethod
