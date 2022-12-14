@@ -38,7 +38,6 @@ class Plugin(Serializable, metaclass=ABCMeta):
     def __init__(self) -> None:
         super().__init__()
 
-        print("base plugin")
         self.drop_consts = []
 
     @staticmethod
