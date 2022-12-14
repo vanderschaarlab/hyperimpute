@@ -76,8 +76,7 @@ def test_hyperimpute_plugin_fit_transform(test_plugin: ImputerPlugin) -> None:
             [[1, 1, 1, 1], [np.nan, np.nan, np.nan, np.nan], [3, 3, 9, 9], [2, 2, 2, 2]]
         )
     )
-
-    assert not np.all(np.isnan(res))
+    assert not np.any(np.isnan(res))
 
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
@@ -92,7 +91,7 @@ def test_compare_methods_perf(
 ) -> None:
     np.random.seed(0)
 
-    n = 20
+    n = 50
     p = 4
 
     mean = np.repeat(0, p)
@@ -127,7 +126,7 @@ def test_compare_optimizers(
 
     np.random.seed(0)
 
-    n = 20
+    n = 50
     p = 4
 
     mean = np.repeat(0, p)
@@ -166,7 +165,7 @@ def test_imputation_order(
 
     np.random.seed(0)
 
-    n = 20
+    n = 50
     p = 4
 
     mean = np.repeat(0, p)

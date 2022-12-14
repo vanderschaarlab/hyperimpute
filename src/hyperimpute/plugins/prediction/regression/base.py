@@ -27,7 +27,9 @@ class RegressionPlugin(RegressorMixin, BaseEstimator, prediction_base.Prediction
         self,
         **kwargs: Any,
     ) -> None:
-        super().__init__()
+        RegressorMixin.__init__(self)
+        BaseEstimator.__init__(self)
+        prediction_base.PredictionPlugin.__init__(self)
 
         self.args = kwargs
 

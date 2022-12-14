@@ -36,7 +36,7 @@ class KNeighborsClassifierPlugin(base.ClassifierPlugin):
         model: Any = None,
         **kwargs: Any
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(random_state=random_state, **kwargs)
         if model is not None:
             self.model = model
             return

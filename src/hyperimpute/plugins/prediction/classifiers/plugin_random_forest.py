@@ -56,7 +56,7 @@ class RandomForestPlugin(base.ClassifierPlugin):
         hyperparam_search_iterations: Optional[int] = None,
         **kwargs: Any
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(random_state=random_state, **kwargs)
         if hyperparam_search_iterations:
             n_estimators = int(hyperparam_search_iterations)
 
