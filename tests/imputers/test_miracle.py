@@ -49,4 +49,4 @@ def test_mean_plugin_fit_transform(test_plugin: ImputerPlugin) -> None:
         )
     )
 
-    assert res.isnull().values.any() is False
+    assert res.isnull().values.any() == False  # noqa
