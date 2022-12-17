@@ -1,13 +1,13 @@
 # stdlib
+import os
 from typing import Tuple
 
 # third party
 import optuna
+import redis
 
 # hyperimpute absolute
 import hyperimpute.logger as log
-import redis
-import os
 
 REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
 
