@@ -29,8 +29,8 @@ def _eval_imputer_pipeline(test_imputer: str) -> None:
     n_missing_samples = int(np.floor(n_samples * missing_rate))
     missing_samples = np.hstack(
         (
-            np.zeros(n_samples - n_missing_samples, dtype=np.bool),
-            np.ones(n_missing_samples, dtype=np.bool),
+            np.zeros(n_samples - n_missing_samples, dtype=bool),
+            np.ones(n_missing_samples, dtype=bool),
         )
     )
     rng.shuffle(missing_samples)
