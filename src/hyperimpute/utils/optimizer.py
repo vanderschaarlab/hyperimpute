@@ -21,10 +21,10 @@ class RedisBackend:
     ):
         self.url = f"redis://{host}:{port}/"
 
-        self._optuna_storage = optuna.storages.RedisStorage(url=self.url)
+        self._optuna_storage = optuna.storages.JournalRedisStorage(url=self.url)
         self._client = redis.Redis.from_url(self.url)
 
-    def optuna(self) -> optuna.storages.RedisStorage:
+    def optuna(self) -> optuna.storages.JournalRedisStorage:
         return self._optuna_storage
 
     def client(self) -> redis.Redis:
