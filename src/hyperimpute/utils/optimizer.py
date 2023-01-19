@@ -4,6 +4,7 @@ from typing import Tuple
 
 # third party
 import optuna
+from optuna.storages import JournalRedisStorage, JournalStorage
 import redis
 
 # hyperimpute absolute
@@ -21,7 +22,7 @@ class RedisBackend:
     ):
         self.url = f"redis://{host}:{port}/"
 
-        self._optuna_storage = optuna.storages.JournalRedisStorage(url=self.url)
+        self._optuna_storage = JournalStorage(JournalRedisStorage(url=self.url))
         self._client = redis.Redis.from_url(self.url)
 
     def optuna(self) -> optuna.storages.JournalRedisStorage:
