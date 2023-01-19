@@ -32,7 +32,6 @@ class RedisBackend:
         return self._client
 
 
-backend = RedisBackend()
 threshold = 40
 
 
@@ -105,7 +104,11 @@ def create_study(
     patience: int = threshold,
 ) -> Tuple[optuna.Study, ParamRepeatPruner]:
 
-    storage_obj = backend.optuna()
+    try:
+        backend = RedisBackend()
+        storage_obj = backend.optuna()
+    except BaseException:
+        storage_obj = None
 
     try:
         study = optuna.create_study(
