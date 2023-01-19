@@ -4,6 +4,7 @@ from typing import Tuple
 
 # third party
 import optuna
+from optuna.storages import JournalRedisStorage, JournalStorage
 import redis
 
 # hyperimpute absolute
@@ -21,17 +22,16 @@ class RedisBackend:
     ):
         self.url = f"redis://{host}:{port}/"
 
-        self._optuna_storage = optuna.storages.RedisStorage(url=self.url)
+        self._optuna_storage = JournalStorage(JournalRedisStorage(url=self.url))
         self._client = redis.Redis.from_url(self.url)
 
-    def optuna(self) -> optuna.storages.RedisStorage:
+    def optuna(self) -> JournalStorage:
         return self._optuna_storage
 
     def client(self) -> redis.Redis:
         return self._client
 
 
-backend = RedisBackend()
 threshold = 40
 
 
@@ -104,7 +104,11 @@ def create_study(
     patience: int = threshold,
 ) -> Tuple[optuna.Study, ParamRepeatPruner]:
 
-    storage_obj = backend.optuna()
+    try:
+        backend = RedisBackend()
+        storage_obj = backend.optuna()
+    except BaseException:
+        storage_obj = None
 
     try:
         study = optuna.create_study(
