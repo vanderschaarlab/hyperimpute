@@ -138,19 +138,42 @@ class Serializable:
         return MAJOR_VERSION
 
 
+def _add_version(obj: Any) -> Any:
+    obj._serde_version = MAJOR_VERSION
+    return obj
+
+
+def _check_version(obj: Any) -> Any:
+    local_version = obj._serde_version
+
+    if not hasattr(obj, "_serde_version"):
+        raise RuntimeError("Missing serialization version")
+
+    if local_version != MAJOR_VERSION:
+        raise ValueError(
+            f"Serialized object mismatch. Current major version is {MAJOR_VERSION}, but the serialized object has version {local_version}."
+        )
+
+
 def save(model: Any) -> bytes:
+    _add_version(model)
     return cloudpickle.dumps(model)
 
 
 def load(buff: bytes) -> Any:
-    return cloudpickle.loads(buff)
+    obj = cloudpickle.loads(buff)
+    _check_version(obj)
+    return obj
 
 
 def save_to_file(path: Union[str, Path], model: Any) -> Any:
+    _add_version(model)
     with open(path, "wb") as f:
         return cloudpickle.dump(model, f)
 
 
 def load_from_file(path: Union[str, Path]) -> Any:
     with open(path, "rb") as f:
-        return cloudpickle.load(f)
+        obj = cloudpickle.load(f)
+        _check_version(obj)
+        return obj

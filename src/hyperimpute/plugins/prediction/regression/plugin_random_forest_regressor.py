@@ -41,7 +41,7 @@ class RandomForestRegressionPlugin(base.RegressionPlugin):
     """
 
     criterions = ["squared_error", "absolute_error", "poisson"]
-    features = ["auto", "sqrt", "log2"]
+    features = ["sqrt", "log2", None]
 
     def __init__(
         self,
@@ -103,6 +103,8 @@ class RandomForestRegressionPlugin(base.RegressionPlugin):
         return self
 
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
+        X = np.asarray(X)
+
         return self.model.predict(X, *args, **kwargs)
 
 
