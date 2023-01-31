@@ -29,12 +29,14 @@ def dataset(mechanism: str, p_miss: float) -> Tuple[np.ndarray, np.ndarray, np.n
     return pd.DataFrame(x), pd.DataFrame(x_miss)
 
 
-@pytest.mark.slow
 @pytest.mark.parametrize("plugin", Imputers().list())
 def test_pickle(plugin: str) -> None:
     x, x_miss = dataset("MAR", 0.3)
 
     estimator = Imputers().get(plugin)
+
+    buff = save(estimator)
+    estimator_new = load(buff)
 
     estimator.fit_transform(x_miss)
 

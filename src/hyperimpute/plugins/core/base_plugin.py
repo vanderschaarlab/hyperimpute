@@ -38,8 +38,6 @@ class Plugin(Serializable, metaclass=ABCMeta):
     def __init__(self) -> None:
         super().__init__()
 
-        self.drop_consts = []
-
     @staticmethod
     @abstractmethod
     def hyperparameter_space(*args: Any, **kwargs: Any) -> List[Params]:
@@ -122,11 +120,6 @@ class Plugin(Serializable, metaclass=ABCMeta):
     def fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> Any:
         X = cast.to_dataframe(X)
 
-        for col in X.columns:
-            if len(X.loc[X[col].notna(), col].unique()) <= 1:
-                self.drop_consts.append(col)
-
-        X = X.drop(columns=self.drop_consts)
         self.columns = X.columns
         return self._fit(X, *args, **kwargs)
 
@@ -136,7 +129,6 @@ class Plugin(Serializable, metaclass=ABCMeta):
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = cast.to_dataframe(X)
-        X = X.drop(columns=self.drop_consts)
         return pd.DataFrame(self._transform(X))
 
     @abstractmethod
@@ -145,7 +137,6 @@ class Plugin(Serializable, metaclass=ABCMeta):
 
     def predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
         X = cast.to_dataframe(X)
-        X = X.drop(columns=self.drop_consts)
         return pd.DataFrame(self._predict(X, *args, *kwargs))
 
     @abstractmethod
