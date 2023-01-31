@@ -11,6 +11,7 @@ import cloudpickle
 from pydantic import validate_arguments
 
 # hyperimpute absolute
+import hyperimpute.logger as log
 from hyperimpute.version import MAJOR_VERSION
 
 module_path = Path(__file__).resolve()
@@ -139,11 +140,23 @@ class Serializable:
 
 
 def save(model: Any) -> bytes:
+    model._serde_version = MAJOR_VERSION
     return cloudpickle.dumps(model)
 
 
 def load(buff: bytes) -> Any:
-    return cloudpickle.loads(buff)
+    obj = cloudpickle.loads(buff)
+
+    if not hasattr(obj, "_serde_version"):
+        log.critical("Missing serialization version")
+
+    local_version = obj._serde_version
+    if local_version != MAJOR_VERSION:
+        log.warning(
+            f"Serialized object mismatch. Current major version is {MAJOR_VERSION}, but the serialized object has version {local_version}."
+        )
+
+    return obj
 
 
 def save_to_file(path: Union[str, Path], model: Any) -> Any:
