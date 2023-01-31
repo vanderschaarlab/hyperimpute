@@ -41,7 +41,7 @@ class RandomForestPlugin(base.ClassifierPlugin):
     """
 
     criterions = ["gini", "entropy"]
-    features = ["auto", "sqrt", "log2"]
+    features = ["sqrt", "log2", None]
 
     def __init__(
         self,
@@ -97,11 +97,13 @@ class RandomForestPlugin(base.ClassifierPlugin):
         return self
 
     def _predict(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.DataFrame:
+        X = np.asarray(X)
         return self.model.predict(X, *args, **kwargs)
 
     def _predict_proba(
         self, X: pd.DataFrame, *args: Any, **kwargs: Any
     ) -> pd.DataFrame:
+        X = np.asarray(X)
         return self.model.predict_proba(X, *args, **kwargs)
 
 

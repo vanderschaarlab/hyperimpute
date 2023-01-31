@@ -2,6 +2,7 @@
 from typing import Tuple
 
 # third party
+import cloudpickle
 import numpy as np
 import pandas as pd
 import pytest
@@ -44,3 +45,10 @@ def test_pickle(plugin: str) -> None:
     estimator_new = load(buff)
 
     estimator_new.transform(x_miss)
+
+    # load wrong version
+    estimator._serde_version = "sdfsfs"
+    buff = cloudpickle.dumps(estimator)
+
+    with pytest.raises(ValueError):
+        load(buff)
