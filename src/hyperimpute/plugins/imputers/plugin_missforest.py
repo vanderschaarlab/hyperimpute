@@ -72,7 +72,6 @@ class MissForestPlugin(base.ImputerPlugin):
         return [
             params.Integer("n_estimators", 10, 50, 10),
             params.Integer("max_iter", 100, 300, 100),
-            params.Integer("max_depth", 1, 3),
         ]
 
     @decorators.benchmark

@@ -226,6 +226,8 @@ class EMPlugin(base.ImputerPlugin):
     def __init__(
         self,
         random_state: int = 0,
+        maxit: int = 500,
+        convergence_threshold: float = 1e-08,
     ) -> None:
         super().__init__(random_state=random_state)
 
