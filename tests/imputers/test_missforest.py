@@ -46,7 +46,7 @@ def test_missforest_plugin_type(test_plugin: ImputerPlugin) -> None:
 
 @pytest.mark.parametrize("test_plugin", [from_api(), from_module(), from_serde()])
 def test_missforest_plugin_hyperparams(test_plugin: ImputerPlugin) -> None:
-    assert len(test_plugin.hyperparameter_space()) == 3
+    assert len(test_plugin.hyperparameter_space()) == 2
     assert test_plugin.hyperparameter_space()[0].name == "n_estimators"
 
 
