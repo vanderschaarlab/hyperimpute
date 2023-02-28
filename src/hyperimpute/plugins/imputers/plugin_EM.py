@@ -6,6 +6,7 @@ from typing import Any, List, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.base import TransformerMixin
+from sklearn.impute import SimpleImputer
 
 # hyperimpute absolute
 import hyperimpute.logger as log
@@ -187,10 +188,11 @@ class EM(TransformerMixin):
                 log.critical(f"EM step failed. {e}")
                 break
 
-        if np.all(np.isnan(X_reconstructed)):
-            err = "The imputed result contains nan. This is a bug. Please report it on the issue tracker."
-            log.critical(err)
-            raise RuntimeError(err)
+        if np.any(np.isnan(X_reconstructed)):
+            # fallback to mean imputation in case of singular matrix.
+            X_reconstructed = SimpleImputer(strategy="mean").fit_transform(
+                X_reconstructed
+            )
 
         return X_reconstructed
 
@@ -231,7 +233,7 @@ class EMPlugin(base.ImputerPlugin):
     ) -> None:
         super().__init__(random_state=random_state)
 
-        self._model = EM()
+        self._model = EM(maxit=maxit, convergence_threshold=convergence_threshold)
 
     @decorators.benchmark
     def _fit(self, X: pd.DataFrame, *args: Any, **kwargs: Any) -> "EMPlugin":

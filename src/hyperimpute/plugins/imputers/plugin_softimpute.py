@@ -167,7 +167,7 @@ class SoftImpute(TransformerMixin):
         s_thresh = np.diag(s_thresh)
         X_reconstructed = np.dot(U_thresh, np.dot(s_thresh, V_thresh))
 
-        if np.all(np.isnan(X_reconstructed)):
+        if np.any(np.isnan(X_reconstructed)):
             err = "The imputed result contains nan. This is a bug. Please report it on the issue tracker."
             log.critical(err)
             raise RuntimeError(err)
