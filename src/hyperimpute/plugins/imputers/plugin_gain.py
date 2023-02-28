@@ -293,7 +293,7 @@ class GainImputation(TransformerMixin):
             imputed_data[:, i] = imputed_data[:, i] * (max_val[i] + EPS)
             imputed_data[:, i] = imputed_data[:, i] + min_val[i]
 
-        if np.all(np.isnan(imputed_data.detach().cpu().numpy())):
+        if np.any(np.isnan(imputed_data.detach().cpu().numpy())):
             err = "The imputed result contains nan. This is a bug. Please report it on the issue tracker."
             log.critical(err)
             raise RuntimeError(err)

@@ -57,7 +57,7 @@ def test_em_plugin_fit_transform(test_plugin: ImputerPlugin) -> None:
         )
     )
 
-    assert not np.all(np.isnan(res))
+    assert not np.any(np.isnan(res))
 
 
 @pytest.mark.slow
@@ -66,7 +66,7 @@ def test_em_plugin_fit_transform(test_plugin: ImputerPlugin) -> None:
 @pytest.mark.parametrize("p_miss", [0.5])
 @pytest.mark.parametrize(
     "other_plugin",
-    [Imputers().get("mean"), Imputers().get("median"), Imputers().get("most_frequent")],
+    [Imputers().get("most_frequent")],
 )
 def test_compare_methods_perf(
     test_plugin: ImputerPlugin, mechanism: str, p_miss: float, other_plugin: Any

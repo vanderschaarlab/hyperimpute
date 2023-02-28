@@ -59,7 +59,7 @@ def test_softimpute_plugin_fit_transform(test_plugin: ImputerPlugin) -> None:
         )
     )
 
-    assert not np.all(np.isnan(res))
+    assert not np.any(np.isnan(res))
 
 
 @pytest.mark.slow
