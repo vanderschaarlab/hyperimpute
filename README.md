@@ -3,7 +3,7 @@
 <div align="center">
 
 [![Test In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1zGm4VeXsJ-0x6A5_icnknE7mbJ0knUig?usp=sharing)
-[![Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
+[![Tests](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test_pr.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test.yml)
 [![Tutorials](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test_tutorials.yml/badge.svg)](https://github.com/vanderschaarlab/hyperimpute/actions/workflows/test_tutorials.yml)
 [![Documentation Status](https://readthedocs.org/projects/hyperimpute/badge/?version=latest)](https://hyperimpute.readthedocs.io/en/latest/?badge=latest)
 
