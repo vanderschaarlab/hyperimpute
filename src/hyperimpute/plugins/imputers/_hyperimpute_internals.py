@@ -695,7 +695,7 @@ class IterativeErrorCorrection(Serializable):
                 )
 
             if X[col].dtype == "object" or self._is_categorical(X, col):
-                # TODOD: One hot encoding for smaller cnt
+                # TODO: One hot encoding for smaller size features
 
                 existing_vals = X[col][X[col].notnull()]
 
